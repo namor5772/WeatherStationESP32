@@ -18,17 +18,15 @@
 
 
 // WIFI network credentials
-const char* ssid     = "OPTUS_E4E36E";
-const char* password = "stullglaik32369";
-//const char* ssid     = "RMGmob";
-//const char* password = "5z2b87S9";
+const char* ssid     = "***";
+const char* password = "***";
 
 
 // MQTT connection credentials
 const char* mqttServer = "m24.cloudmqtt.com"; 
 int mqttPort = 16464;
-#define MQTT_USER "tigoclnq"
-#define MQTT_PASSWORD "Fq1VurxwHlei"
+#define MQTT_USER "***"
+#define MQTT_PASSWORD "***"
 
 
 // MQTT definitions
