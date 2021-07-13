@@ -19,11 +19,8 @@
 
 
 // WIFI network credentials
-const char* ssid     = "OPTUS_E4E36E";
-const char* password = "stullglaik32369";
-//const char* ssid     = "RMGmob";
-//const char* password = "5z2b87S9";
-
+const char* ssid     = "****";
+const char* password = "****";
 
 // MQTT connection credentials
 const char* mqttServer = "m24.cloudmqtt.com"; 
