@@ -23,10 +23,10 @@ const char* ssid     = "****";
 const char* password = "****";
 
 // MQTT connection credentials
-const char* mqttServer = "m24.cloudmqtt.com"; 
-int mqttPort = 16464;
-#define MQTT_USER "tigoclnq"
-#define MQTT_PASSWORD "Fq1VurxwHlei" 
+const char* mqttServer = "*****"; 
+int mqttPort = 66666;
+#define MQTT_USER "*****"
+#define MQTT_PASSWORD "*****" 
 
 
 // MQTT definitions
