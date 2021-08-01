@@ -7,10 +7,10 @@ from time import sleep
 sub_topic = "ESP32"  # Messages for Win10 machine
 sub_topic_end = "ESP32_END"  # Stop messages for Win10 machine
 pub_topic = "W10" #  Messages for ESP32 machine
-broker="m24.cloudmqtt.com"
-port=16464
-username="tigoclnq"
-password="vocax0TgsKDf"
+broker="<your mqtt broker website">"
+port="<your mqtt port number>"
+username="<your mqtt username>"
+password="<your mqtt password"
 
 Connected = False
 ibytes = 0
