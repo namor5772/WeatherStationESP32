@@ -322,7 +322,6 @@ void callback(char* topic, byte *payload, unsigned int length) {
     
     /*  RESPOND TO PAYLOAD */
     // converts payload to both String and char[] for easier processing ???
-    //char bufr[MQTTB];
     int i;
     Amsg = "";
     for (i=0; i<length; i++) { Amsg += (char)payload[i]; }  
@@ -759,7 +758,6 @@ void parseMQTTcredentials(int iTo) {
     bool iParsed = false; 
     bool iMaxed = false;
     int m, k, i=0;
-    //char bufr[MQTTB];
     char c, d;
     String sOut;
     
@@ -1182,7 +1180,7 @@ void loop() {
         }
     }
 
-/*    
+/* JUST HERE FOR FUN    
     time_now = millis();
     while (millis() < time_now+1000) { }
 */    
