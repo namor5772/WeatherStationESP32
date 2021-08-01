@@ -7,10 +7,16 @@ from time import sleep
 sub_topic = "ESP32"  # Messages for Win10 machine
 sub_topic_end = "ESP32_END"  # Stop messages for Win10 machine
 pub_topic = "W10" #  Messages for ESP32 machine
-broker="<your mqtt broker website">"
-port="<your mqtt port number>"
-username="<your mqtt username>"
-password="<your mqtt password"
+
+broker="<your mqtt broker website"
+port=66666 #your mqtt port number
+username="<your mqtt brokers username>"
+password="<your mqtt brokers password>"
+
+print(broker)
+print(port)
+print(username)
+print(password)
 
 Connected = False
 ibytes = 0
@@ -40,6 +46,18 @@ def Enter(*args):
         
     except ValueError:
         pass
+
+
+# download mqtt configuration parameters from MQTTconfig_W10.txt file
+# this enables easy change and prevents exposing login details with
+# this python source being located on a public GitHub directory.
+d = "C:\\Users\\roman\\OneDrive\\Python\\MQTTconfig_W10.txt"
+with open(d) as f:
+    c = f.readlines()
+broker=c[0].rstrip()
+port=int(c[1],10)
+username=c[2].rstrip()
+password=c[3].rstrip()
 
 
 # setup the GUI
