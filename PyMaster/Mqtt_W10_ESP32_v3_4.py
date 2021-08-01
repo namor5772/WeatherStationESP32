@@ -13,11 +13,6 @@ port=66666 #your mqtt port number
 username="<your mqtt brokers username>"
 password="<your mqtt brokers password>"
 
-print(broker)
-print(port)
-print(username)
-print(password)
-
 Connected = False
 ibytes = 0
 icount = 0
