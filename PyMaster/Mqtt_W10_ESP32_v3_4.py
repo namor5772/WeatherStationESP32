@@ -36,10 +36,12 @@ def Enter(*args):
     global username
     global password
     
-    try:            
+    try:
+        # read and split input string list c
         s = inp.get()
         c = s.split()
-        if c[0]!='Xmqtt':
+
+        if c[0]!='Xmqtt': # 'send' string list c to slave
             client.publish(pub_topic,s)
             text['state'] = 'normal'
             text.insert('end', '\n'+s)
@@ -111,6 +113,7 @@ def Enter(*args):
 d = "C:\\Users\\roman\\OneDrive\\Python\\MQTTconfig_W10.txt"
 with open(d) as f:
     c = f.readlines()
+f.close()                                 
 broker=c[0].rstrip()
 port=int(c[1],10)
 username=c[2].rstrip()
