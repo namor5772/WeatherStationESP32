@@ -9,9 +9,9 @@ sub_topic_end = "ESP32_END"  # Stop messages for Win10 machine
 pub_topic = "W10" #  Messages for ESP32 machine
 
 broker="<your mqtt broker website"
-port=66666 #your mqtt port number
-username="<your mqtt brokers username>"
-password="<your mqtt brokers password>"
+port=66666 #<your mqtt port number>
+username="<your mqtt username>"
+password="<your mqtt password>"
 
 Connected = False
 ibytes = 0
@@ -31,16 +31,78 @@ def onWindowExit():
 
 # when the Enter key is pressed (after typing command to slave)
 def Enter(*args):
+    global broker
+    global port
+    global username
+    global password
+    
     try:            
         s = inp.get()
-        client.publish(pub_topic,s)
-        
-        text['state'] = 'normal'
-        text.insert('end', '\n'+s)
-        text['state'] = 'disabled'
+        c = s.split()
+        if c[0]!='Xmqtt':
+            client.publish(pub_topic,s)
+            text['state'] = 'normal'
+            text.insert('end', '\n'+s)
+            text['state'] = 'disabled'
+            
+        else: # read in mqtt config for this master py program
+            # must have 4 parameters 
+            if len(c)==5:
+                try:
+                    # setup proposed login parameters
+                    broker=c[1]
+                    try:
+                        port=int(c[2],10)
+                    except ValueError:
+                        port=66666
+                    username=c[3]
+                    password=c[4]
+
+                    # display proposed login parameters
+                    text['state'] = 'normal'
+                    text.delete(1.0,'end')
+                    text.insert('end', 'broker='+broker)
+                    text.insert('end', '\nport='+str(port))
+                    text.insert('end', '\nusername='+username)
+                    text.insert('end', '\npassword='+password+'\n')
+                    text['state'] = 'disabled'
+
+                    # disconnect nicely before reconnecting
+                    client.loop_stop()
+                    client.disconnect()
+
+                    # (re)start MQTT loop with new parameters
+                    client.username_pw_set(username,password)
+                    client.on_connect = on_connect
+                    client.on_message = on_message
+                    client.on_publish = on_publish
+                    client.connect(broker,port,65535)
+                    client.loop_start()
+
+                    # save configuration to text file
+                    d = "C:\\Users\\roman\\OneDrive\\Python\\MQTTconfig_W10.txt"
+                    f = open(d, 'wt')
+                    for i in range(1,5):
+                        f.write(c[i]+'\n')
+                    f.close()                                 
+                    
+                except:
+                    text['state'] = 'normal'
+                    text.delete(1.0,'end')
+                    text.insert('end', '*** MQTT CONNECTION FAILED ***')
+                    text['state'] = 'disabled'
+                
+            else:
+                text['state'] = 'normal'
+                text.delete(1.0,'end')
+                text.insert('end', '*** PARSING ERROR FOR MASTER MQTT CONFIGURATION ***')
+                text['state'] = 'disabled'
         
     except ValueError:
-        pass
+        text['state'] = 'normal'
+        text.delete(1.0,'end')
+        text.insert('end', '*** VALUE ERROR ***')
+        text['state'] = 'disabled'
 
 
 # download mqtt configuration parameters from MQTTconfig_W10.txt file
@@ -116,7 +178,7 @@ def on_connect(client, userdata, flags, rc):
 
     else:
         text['state'] = 'normal'
-        text.insert('end', 'Connection failed')
+        text.insert('end', '*** CONNECTION FAILED ***\n')
         text['state'] = 'disabled'
 
 
@@ -199,7 +261,7 @@ def on_message(client, userdata, msg):
             fo = open("C:\\Users\\roman\\OneDrive\\Python\\"+fName,"wb")
     
 
-# setup MQTT
+# start MQTT loop
 client = mqttc.Client("Win10 client")
 client.username_pw_set(username,password)
 client.on_connect = on_connect
@@ -208,4 +270,5 @@ client.on_publish = on_publish
 client.connect(broker,port,65535)
 client.loop_start()
 
+# tkinter GUI loop
 root.mainloop()    
