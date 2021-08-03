@@ -2,7 +2,7 @@
 
 #include <DS3231M.h>
 
-#include <ESP32Servo.h>
+//#include <ESP32Servo.h>
 
 #include <time.h>
 #include <Wire.h>
@@ -83,9 +83,20 @@ volatile unsigned long aRAIN[nRAIN]; // array to store millis time stamps for ra
 #define VANE_GPIO 34 // ADC1_CH6
 
 
-/*  GPIO PIN NAMES  */    
-#define LED1_GPIO 25
-#define LED0_GPIO 26
+/*  RELAY  */    
+#define RELAY_GPIO 25
+
+
+/* SERVO */
+#define SERVO_GPIO 26
+int dutyCycle = 4000; // experimental range [9=0deg, 32=180deg]
+const int PWMFreq = 50;
+const int PWMChannel = 0; 
+const int PWMResolution = 8;
+// experimental range [9=0deg, 32=180deg] with Chan=0, Res=8, anticlockwise
+// experimental range [2200=0deg, 8200=180deg] with Chan=0 or 1, Res=16,
+//  anticlockwise - not linear? 5000=90deg
+
 
 
 /*  BLUETOOTH SERVER    */    
@@ -336,13 +347,22 @@ void callback(char* topic, byte *payload, unsigned int length) {
         delay(5000);
         ESP.restart();
         
-    } else if (Amsg.equals("00")||Amsg.equals("01")||Amsg.equals("10")||Amsg.equals("11")) {
-        // Control two LEDS, 00=off,off 10=on,off 01=off,on 11=on,on 
-        client.publish(SLAVE, "SETTING LEDS", false);
+    } else if (Amsg.substring(0,1).equals("s")) {
+        // move servo to a position range [9=0deg, 32=180deg]
+        Amsg.remove(0,1); Amsg.trim(); i=Amsg.toInt();
+        if((i>=9)&&(i<=32)) {
+            dutyCycle = i;                        
+            ledcWrite(PWMChannel, dutyCycle);
+            client.publish(SLAVE, "SERVO MOVED", false);
+        } else {
+            client.publish(SLAVE, "*** SERVO NOT MOVED - INVALID RANGE ***", false);
+        }
+        
+    } else if (Amsg.equals("0")||Amsg.equals("1")) {
+        // Controls relay 0=off, 1=on
+        client.publish(SLAVE, "SET RELAY", false);
         if (Amsg[0]=='0') { digitalWrite(25, LOW); }
         if (Amsg[0]=='1') { digitalWrite(25, HIGH); }
-        if (Amsg[1]=='0') { digitalWrite(26, LOW);  }
-        if (Amsg[1]=='1') { digitalWrite(26, HIGH); }
 
     } else if (Amsg.equals("m")) {
         // Measure all sensors and publish with timestamp for MASTER to see
@@ -995,6 +1015,12 @@ void getLocalTimeRTC(tm * t) {
 
 // THE Arduino IDE setup routine
 void setup() {
+    /* Setup and attach the LED PWM Channel to the GPIO Pin */
+    ledcSetup(PWMChannel, PWMFreq, PWMResolution);
+    ledcAttachPin(SERVO_GPIO, PWMChannel);
+    ledcWrite(PWMChannel, dutyCycle);
+
+    
     // setup serial used for development/debugging
     Serial.begin(115200);
     Serial.setTimeout(500);
@@ -1110,9 +1136,16 @@ void setup() {
     pinMode(RAIN_GPIO, INPUT_PULLUP); attachInterrupt(RAIN_GPIO, RAIN_ISR, FALLING);
 
 
-    // setup GPIO pins for LEDS  
-    pinMode(LED0_GPIO, OUTPUT); digitalWrite(LED0_GPIO, LOW);
-    pinMode(LED1_GPIO, OUTPUT); digitalWrite(LED1_GPIO, LOW);
+    // setup GPIO pin for relay  
+    pinMode(RELAY_GPIO, OUTPUT); digitalWrite(RELAY_GPIO, LOW);
+
+    
+    /* Setup and attach the LED PWM Channel to the GPIO Pin */
+    // setup LED PWM Channel for servo (Tower Pro SG90)
+    // this has a 180 deg range with duty cycle ra
+    ledcSetup(PWMChannel, PWMFreq, PWMResolution);
+    ledcAttachPin(SERVO_GPIO, PWMChannel);
+    ledcWrite(PWMChannel, dutyCycle);
 }
 
 
@@ -1183,6 +1216,16 @@ void loop() {
         }
     }
 
+
+    while(Serial.available())
+    {
+        String in_char = Serial.readStringUntil('\n');
+        dutyCycle = in_char.toInt();
+        Serial.println(dutyCycle);
+        ledcWrite(PWMChannel, dutyCycle);
+        delay(10);
+    }
+  
 /* JUST HERE FOR FUN    
     time_now = millis();
     while (millis() < time_now+1000) { }
