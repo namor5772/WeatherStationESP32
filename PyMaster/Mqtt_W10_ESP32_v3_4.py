@@ -26,6 +26,7 @@ bPrint = True
 def onWindowExit():
     sleep(1)
     client.loop_stop()    
+    client.disconnect()
     root.destroy()
 
 

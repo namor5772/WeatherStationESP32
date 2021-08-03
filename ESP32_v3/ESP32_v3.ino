@@ -958,10 +958,11 @@ void MQTThelp() {
     client.publish(SLAVE, " m // measure all sensors and display with time stamp", false);
     client.publish(SLAVE, " d // delete SensorData.csv file", false);
     client.publish(SLAVE, " o // display SensorData.csv file", false);
-    client.publish(SLAVE, " wifi [<ssid> <pwd>] // display or change wifi settings", false);
-    client.publish(SLAVE, " mqtt [<server> <port> <user> <pwd>] // display or change mqtt settings", false);
+    client.publish(SLAVE, " wifi [<ssid> <pwd>] // display or change slave wifi settings", false);
+    client.publish(SLAVE, " mqtt [<server> <port> <user> <pwd>] // display or change slave mqtt settings", false);
+    client.publish(SLAVE, " Xmqtt [<server> <port> <user> <pwd>] // display or change master mqtt settings", false);
     client.publish(SLAVE, " time [<minGap>] // display or change data collection settings", false);
-    client.publish(SLAVE, " gd <filename> // Copy filename from SLAVE to MASTER", false);
+    client.publish(SLAVE, " gd <filename> // Copy filename from slave to master", false);
     client.publish(SLAVE, " help // display this help", false);
 }
 
@@ -970,8 +971,8 @@ void MQTThelp() {
 void BThelp() {
     SerialBT.println("r // restart this ESP32 in 5 seconds");
     SerialBT.println("m // measure all sensors and display with time stamp");
-    SerialBT.println("wifi [<ssid> <pwd>] // display or change wifi settings");
-    SerialBT.println("mqtt [<server> <port> <user> <pwd>] // display or change mqtt settings");
+    SerialBT.println("wifi [<ssid> <pwd>] // display or change slave wifi settings");
+    SerialBT.println("mqtt [<server> <port> <user> <pwd>] // display or change slave mqtt settings");
     SerialBT.println("time [<minGap>] // display or change data collection settings");
     SerialBT.println("help // display this help");
 }
