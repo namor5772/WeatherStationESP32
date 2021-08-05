@@ -89,14 +89,13 @@ volatile unsigned long aRAIN[nRAIN]; // array to store millis time stamps for ra
 
 /* SERVO */
 #define SERVO_GPIO 26
-int dutyCycle = 4000; // experimental range [9=0deg, 32=180deg]
+int dutyCycle = 20; // experimental range [9=0deg, 32=180deg]
 const int PWMFreq = 50;
 const int PWMChannel = 0; 
 const int PWMResolution = 8;
-// experimental range [9=0deg, 32=180deg] with Chan=0, Res=8, anticlockwise
+// experimental range [8=0deg, 32=180deg] with Chan=0, Res=8, anticlockwise
 // experimental range [2200=0deg, 8200=180deg] with Chan=0 or 1, Res=16,
 //  anticlockwise - not linear? 5000=90deg
-
 
 
 /*  BLUETOOTH SERVER    */    
@@ -225,6 +224,16 @@ void print_INA260values() {
 }
 
 
+/*
+// Basic wrapper. No messages or error checking.
+void appendFileBasic(fs::FS &fs, const char * path, char * message){
+    File file = fs.open(path, FILE_APPEND);
+    file.print(message);
+    file.close();
+}
+*/
+
+
 // pFlag == 0 => read all sensors and publish for MASTER to see
 // pFlag == 1 => read all sensors and append to a SPIFFS internal file
 // pFlag == 2 => read all sensors and publish to bluetooth client
@@ -294,6 +303,21 @@ void readAllSensors(int pFlag) {
 }
 
 
+// read current time into the tm structure using the battery backed RTC
+void getLocalTimeRTC(tm * t) {
+    // get the date and time from the RTC into a DateTime structure
+    DateTime dt = rtc.now();
+    
+    // convert dt to a tm structure
+    t->tm_year = dt.year()-1900;
+    t->tm_mon = dt.month()-1;
+    t->tm_mday = dt.day();
+    t->tm_hour = dt.hour();
+    t->tm_min = dt.minute();
+    t->tm_sec = dt.second();
+}
+
+
 // Returns time in arithmetic representation (in global var dct) which is the nearest
 // integral minute gap (in minGap global var) ahead of the current time (tms, tma) global vars.
 // Assumes 60%mg=0. eg. if minutes of now time is 23 and minGap=10 then returns time with min=40.        
@@ -326,6 +350,35 @@ void createDataCollectionTime() {
 }
 
 
+// 'Safely' and incrementally move the servo to position n
+// in the range [8=0deg, 32=180deg] inclusive. Update the global
+// position dutyCycle. Returns true if all ok, false otherwise.
+boolean MoveServo(int i) {
+    int n;   
+    if((i>=8)&&(i<=32)) {
+        if (i>dutyCycle) {
+            for (n=dutyCycle+1; n<=i; n++) {
+                ledcWrite(PWMChannel,n);
+                delay(15);
+//                Serial.print("up " ); Serial.println(n);
+            }
+//            Serial.print("up end " ); Serial.println(n);
+            dutyCycle = n-1;                        
+        } else if (i<dutyCycle) {
+            for (n=dutyCycle-1; n>=i; n--) {
+                ledcWrite(PWMChannel,n);
+                delay(15);
+//                Serial.print("dn " ); Serial.println(n);
+            }
+//            Serial.print("dn end " ); Serial.println(n);
+            dutyCycle = n+1;                        
+        }
+        return true; // all ok
+    }
+    return false; // parse error
+}    
+
+
 // MQTT callback routine. Driven by client.loop();
 void callback(char* topic, byte *payload, unsigned int length) {
     Serial.print("channel: "); Serial.print(topic);
@@ -337,6 +390,7 @@ void callback(char* topic, byte *payload, unsigned int length) {
     // converts payload to both String and char[] for easier processing ???
     int i;
     Amsg = "";
+    String sOut;
     for (i=0; i<length; i++) { Amsg += (char)payload[i]; }  
     for (i=0; i<length; i++) { bufr[i]=(char)payload[i]; } bufr[i]=0;
     
@@ -348,12 +402,14 @@ void callback(char* topic, byte *payload, unsigned int length) {
         ESP.restart();
         
     } else if (Amsg.substring(0,1).equals("s")) {
-        // move servo to a position range [9=0deg, 32=180deg]
-        Amsg.remove(0,1); Amsg.trim(); i=Amsg.toInt();
-        if((i>=9)&&(i<=32)) {
-            dutyCycle = i;                        
-            ledcWrite(PWMChannel, dutyCycle);
-            client.publish(SLAVE, "SERVO MOVED", false);
+        // move servo to a position in the range [8=0deg, 32=180deg] inclusive
+        Amsg.remove(0,1); Amsg.trim();
+//        i=Amsg.toInt();
+        if (MoveServo(Amsg.toInt())) {
+            sOut = "Servo moved to position ";
+            sOut.concat(itoa(dutyCycle,bufs,10));
+            sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
         } else {
             client.publish(SLAVE, "*** SERVO NOT MOVED - INVALID RANGE ***", false);
         }
@@ -409,7 +465,7 @@ void callback(char* topic, byte *payload, unsigned int length) {
         
     } else {
         // no valid message received
-        String sOut = "INVALID MESSAGE : "; 
+        sOut = "INVALID MESSAGE : "; 
         sOut += bufr;
         sOut.toCharArray(bufr,MQTTB);
         client.publish(SLAVE, bufr, false);
@@ -995,21 +1051,6 @@ void BThelp() {
     SerialBT.println("mqtt [<server> <port> <user> <pwd>] // display or change slave mqtt settings");
     SerialBT.println("time [<minGap>] // display or change data collection settings");
     SerialBT.println("help // display this help");
-}
-
-
-// read current time into the tm structure using the battery backed RTC
-void getLocalTimeRTC(tm * t) {
-    // get the date and time from the RTC into a DateTime structure
-    DateTime dt = rtc.now();
-    
-    // convert dt to a tm structure
-    t->tm_year = dt.year()-1900;
-    t->tm_mon = dt.month()-1;
-    t->tm_mday = dt.day();
-    t->tm_hour = dt.hour();
-    t->tm_min = dt.minute();
-    t->tm_sec = dt.second();
 }
 
 
