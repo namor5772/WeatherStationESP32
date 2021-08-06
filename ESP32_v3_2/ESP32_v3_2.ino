@@ -208,22 +208,12 @@ void readAllSensors(int pFlag) {
     float rw = ina.readPower(); // rw = (r)ead milli(w)atts
     
     // put these sensor readings into a space efficient comma delimited char array in bufa
-    int i, j=0, k, n; 
-    
-/*
-    char buf[10][10],bufa[100+35];
-*/  
-  
-    char buf1[10],buf2[10],buf3[10],buf4[10],buf5[10],buf6[10],
-         buf7[10],buf8[10],buf9[10],buf10[10],bufa[100+35];
+    int i, j=0, k, n; char buf[10][10], bufa[10*10+35];
          
     // put global time variable tms into start of bufa (size depends on pFlag)
-    if (pFlag==0) {
-        k = 22; strftime(bufa,100,"%d-%b-%Y %H:%M:%S",&tms); } // include seconds
-    else { // if pFlag==1
-        k = 22-3; strftime(bufa,100,"%d-%b-%Y %H:%M",&tms); } // ignore seconds
+    if (pFlag==0) {k=22; strftime(bufa,100,"%d-%b-%Y %H:%M:%S",&tms);} // include seconds
+    else {k=22-3; strftime(bufa,100,"%d-%b-%Y %H:%M",&tms);} // ignore seconds
 
-/*
     dtostrf(rt,8,2,buf[0]); // temperature as string (8 chars + 0 at end => 9 chars from buffer)
     dtostrf(rp,8,2,buf[1]); // pressure as string
     dtostrf(rh,8,2,buf[2]); // humidity as string
@@ -234,40 +224,9 @@ void readAllSensors(int pFlag) {
     dtostrf(rc,8,1,buf[7]); // current as string
     dtostrf(rv,8,0,buf[8]); // bus voltage as string
     dtostrf(rw,8,1,buf[9]); // power (in milliwatts) as string
-*/
-        
-    dtostrf(rt,8,2,buf1); // temperature as string (8 chars + 0 at end => 9 chars from buffer)
-    dtostrf(rp,8,2,buf2); // pressure as string
-    dtostrf(rh,8,2,buf3); // humidity as string
-    dtostrf(rr,8,2,buf4); // rainfall as string
-    dtostrf(rs,8,2,buf5); // wind speed as string
-    dtostrf(rd,8,1,buf6); // wind direction as string
-    dtostrf(r3,8,2,buf7); // RTC temp as string
-    dtostrf(rc,8,1,buf8); // current as string
-    dtostrf(rv,8,0,buf9); // bus voltage as string
-    dtostrf(rw,8,1,buf10); // power (in milliwatts) as string
-    
     bufa[k-2] = 44; bufa[k-1] = 32;
-    
-/*    
-    for (n=0;n<9;n++) {
-        for (i=0;i<8;i++) {buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];}  bufa[k+10*n+8-j]=44; bufa[k+10*n+9-j]=32;
-    }
-    for (i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=10; bufa[k+10*n+9-j]=0;
-*/  
-  
-    for (i=0;i<8;i++) {buf1[i]==32 ? j++ :bufa[k+10*0+i-j]=buf1[i];}  bufa[k+10*0+8-j]=44; bufa[k+10*0+9-j]=32;
-    for (i=0;i<8;i++) {buf2[i]==32 ? j++ :bufa[k+10*1+i-j]=buf2[i];}  bufa[k+10*1+8-j]=44; bufa[k+10*1+9-j]=32;
-    for (i=0;i<8;i++) {buf3[i]==32 ? j++ :bufa[k+10*2+i-j]=buf3[i];}  bufa[k+10*2+8-j]=44; bufa[k+10*2+9-j]=32;
-    for (i=0;i<8;i++) {buf4[i]==32 ? j++ :bufa[k+10*3+i-j]=buf4[i];}  bufa[k+10*3+8-j]=44; bufa[k+10*3+9-j]=32;
-    for (i=0;i<8;i++) {buf5[i]==32 ? j++ :bufa[k+10*4+i-j]=buf5[i];}  bufa[k+10*4+8-j]=44; bufa[k+10*4+9-j]=32;
-    for (i=0;i<8;i++) {buf6[i]==32 ? j++ :bufa[k+10*5+i-j]=buf6[i];}  bufa[k+10*5+8-j]=44; bufa[k+10*5+9-j]=32;
-    for (i=0;i<8;i++) {buf7[i]==32 ? j++ :bufa[k+10*6+i-j]=buf7[i];}  bufa[k+10*6+8-j]=44; bufa[k+10*6+9-j]=32;
-    for (i=0;i<8;i++) {buf8[i]==32 ? j++ :bufa[k+10*7+i-j]=buf8[i];}  bufa[k+10*7+8-j]=44; bufa[k+10*7+9-j]=32;
-    for (i=0;i<8;i++) {buf9[i]==32 ? j++ :bufa[k+10*8+i-j]=buf9[i];}  bufa[k+10*8+8-j]=44; bufa[k+10*8+9-j]=32;
-    for (i=0;i<8;i++){buf10[i]==32 ? j++ :bufa[k+10*9+i-j]=buf10[i];} bufa[k+10*9+8-j]=10; bufa[k+10*9+9-j]=0;
-
-    
+    for(n=0;n<9;n++){for(i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=44; bufa[k+10*n+9-j]=32;}
+    for(i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=10; bufa[k+10*n+9-j]=0;
     Serial.print(bufa);
 
     switch (pFlag) {
@@ -360,16 +319,14 @@ void callback(char* topic, byte *payload, unsigned int length) {
     if (Amsg.equals("r")) {
         // restarts ESP32
         client.publish(SLAVE, "RESTARTING SLAVE", false);
-        Serial.println("Restarting in 5 seconds");
-        delay(5000);
+        Serial.println("Restarting in 5 seconds"); delay(5000);
         ESP.restart();
         
     } else if (Amsg.substring(0,1).equals("s")) {
         // move servo to a position in the range [8=0deg, 32=180deg] inclusive
         Amsg.remove(0,1); Amsg.trim();
         if (MoveServo(Amsg.toInt(),0)) {
-            sOut = "Servo moved to position "; sOut.concat(itoa(dutyCycle,bufs,10));
-            sOut.toCharArray(bufs,BMAX);
+            sOut = "Servo moved to position "; sOut.concat(itoa(dutyCycle,bufs,10)); sOut.toCharArray(bufs,BMAX);
             client.publish(SLAVE, bufs, false);
         } else {
             client.publish(SLAVE, "*** SERVO NOT MOVED - INVALID RANGE ***", false);
@@ -559,8 +516,7 @@ void sendFileBlocks(fs::FS &fs, String sFileName){
     sOut = "gd "; sOut.concat(sFileName); sOut.concat(" "); sOut.concat(itoa(file.size(),bufs,10));
     sOut.toCharArray(bufs,BMAX);
     client.publish(SLAVE, bufs, false);
-    Serial.printf("Reading file: %s  Size: %d\n", apath, file.size());
-    Serial.println(bufs);
+    Serial.printf("Reading file: %s  Size: %d\n", apath, file.size()); Serial.println(bufs);
 
     // reading individual characters, consolidating them into MQTTB-NONPAY-1 size blocks
     // (excluding 0) and publishing these to MASTER
@@ -669,9 +625,7 @@ void appendFileBasic(fs::FS &fs, const char * path, char * message){
 // saves to SPIFFS file WIFIconfig.txt for reloading at setup.
 // iTo=1 => feedback to Bluetrack, iTo=0 => feedback to MQTT 
 void parseWIFIcredentials(int iTo) {
-    char wifi_ssidTemp[BMAX];
-    char wifi_passwordTemp[BMAX];
-    
+    char wifi_ssidTemp[BMAX], wifi_passwordTemp[BMAX];
     bool iParsed = false, iMaxed = false; 
     int m, k, i=0; char c, d; String sOut;
     
@@ -733,15 +687,13 @@ void parseWIFIcredentials(int iTo) {
             case 0:
                 // On parsing failure send appropriate feedback to MQTT master
                 (n==4) ? sOut = "current ssid=" : sOut = "cannot parse: unchanged ssid="; 
-                sOut += wifi_ssid; sOut += "  password="; sOut += wifi_password;  
-                sOut.toCharArray(bufr,MQTTB);
+                sOut += wifi_ssid; sOut += "  password="; sOut += wifi_password; sOut.toCharArray(bufr,MQTTB);
                 client.publish(SLAVE, bufr, false);
                 break; 
             case 1:
                 // On parsing failure send appropriate feedback to Bluetooth client
                 (n==4) ? SerialBT.print("current ssid=") : SerialBT.print("cannot parse: unchanged ssid=");
-                SerialBT.print(wifi_ssid);
-                SerialBT.print("  password="); SerialBT.println(wifi_password);
+                SerialBT.print(wifi_ssid); SerialBT.print("  password="); SerialBT.println(wifi_password);
                 break;
         }
     }                
@@ -751,11 +703,7 @@ void parseWIFIcredentials(int iTo) {
 // saves to SPIFFS file MQTTconfig.txt for reloading at setup.
 // iTo=1 => feedback to Bluetrack, iTo=0 => feedback to MQTT 
 void parseMQTTcredentials(int iTo) {
-    char mqtt_serverTemp[BMAX];
-    char mqtt_portTemp[BMAX];
-    char mqtt_userTemp[BMAX];
-    char mqtt_passwordTemp[BMAX];
-    
+    char mqtt_serverTemp[BMAX], mqtt_portTemp[BMAX], mqtt_userTemp[BMAX], mqtt_passwordTemp[BMAX];
     bool iParsed = false, iMaxed = false; 
     int m, k, i=0; char c, d; String sOut;
     
@@ -854,10 +802,7 @@ void parseMQTTcredentials(int iTo) {
 // saves to SPIFFS file TIMEconfig.txt for reloading at setup.
 // iTo=1 => feedback to Bluetrack, iTo=0 => feedback to MQTT 
 void parseTIMEcredentials(int iTo) {
-    //char bufr[MQTTB];
-    char minGapTemp[BMAX];
-    int iminGap;
-    
+    char minGapTemp[BMAX]; int iminGap;
     bool iParsed = false, iMaxed = false; 
     int m, k, i=0; char c, d; String sOut;
 
@@ -961,8 +906,7 @@ void BThelp() {
 // THE Arduino IDE setup routine
 void setup() {
     // setup serial used for development/debugging
-    Serial.begin(115200);
-    Serial.setTimeout(500);
+    Serial.begin(115200); Serial.setTimeout(500);
  
     // Start the I2C interface
     Wire.begin();
@@ -983,8 +927,7 @@ void setup() {
 
     // Set WiFi to station mode and disconnect from an AP if it was previously connected
     WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    delay(100);
+    WiFi.disconnect(); delay(100);
     Serial.println("\nWIFI Setup done");
     
     // list the visible WIFI networks
@@ -1032,8 +975,7 @@ void setup() {
     getLocalTime(&tms,5000);  // uses time server
     if (tms.tm_year!=70) { // internet working
         // so can read time from time server and update RTC
-        rtc.adjust(DateTime(tms.tm_year-100, tms.tm_mon+1, tms.tm_mday,
-                            tms.tm_hour, tms.tm_min, tms.tm_sec));
+        rtc.adjust(DateTime(tms.tm_year-100, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec));
     }
     Serial.print(F("DS3231M chip temperature is "));
     Serial.print(rtc.temperature()/100.0F,2);  // Value is in 100ths of a degree
@@ -1096,8 +1038,7 @@ void loop() {
     // Read until LF found. CR is then replaced by 0 to make null terminating string
     // this string is then parsed and acted upon. 
     if (SerialBT.available() > 0) {
-        Amsg = SerialBT.readStringUntil(10);
-        Amsg.replace(13,0);
+        Amsg = SerialBT.readStringUntil(10); Amsg.replace(13,0);
         Serial.println(Amsg);
 
         if(Amsg.equals("r")) {
