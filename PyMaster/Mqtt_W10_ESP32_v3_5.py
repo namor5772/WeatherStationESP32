@@ -22,6 +22,17 @@ fSize = 0
 bPrint = True
 
 
+def writeToLog(msg):
+    numlines = int(text.index('end - 1 line').split('.')[0])
+    text['state'] = 'normal'
+    if numlines==24:
+        text.delete(1.0, 2.0)
+    if text.index('end-1c')!='1.0':
+        text.insert('end', '\n')
+    text.insert('end', msg)
+    text['state'] = 'disabled'
+
+
 # stop MQTT loop before closing this app
 def onWindowExit():
     sleep(1)
@@ -44,9 +55,10 @@ def Enter(*args):
 
         if c[0]!='Xmqtt': # 'send' string list c to slave
             client.publish(pub_topic,s)
-            text['state'] = 'normal'
-            text.insert('end', '\n'+s)
-            text['state'] = 'disabled'
+            writeToLog('\n'+s)                        
+            #text['state'] = 'normal'
+            #text.insert('end', '\n'+s)
+            #text['state'] = 'disabled'
             
         else: # read in mqtt config for this master py program
             # must have 4 parameters 
@@ -62,13 +74,18 @@ def Enter(*args):
                     password=c[4]
 
                     # display proposed login parameters
-                    text['state'] = 'normal'
-                    text.delete(1.0,'end')
-                    text.insert('end', 'broker='+broker)
-                    text.insert('end', '\nport='+str(port))
-                    text.insert('end', '\nusername='+username)
-                    text.insert('end', '\npassword='+password+'\n')
-                    text['state'] = 'disabled'
+                    writeToLog('broker='+broker)                        
+                    writeToLog('port='+str(port))                        
+                    writeToLog('username='+username)                        
+                    writeToLog('password='+password)                        
+                    
+                    #text['state'] = 'normal'
+                    #text.delete(1.0,'end')
+                    #text.insert('end', 'broker='+broker)
+                    #text.insert('end', '\nport='+str(port))
+                    #text.insert('end', '\nusername='+username)
+                    #text.insert('end', '\npassword='+password+'\n')
+                    #text['state'] = 'disabled'
 
                     # disconnect nicely before reconnecting
                     client.loop_stop()
@@ -96,10 +113,12 @@ def Enter(*args):
                     text['state'] = 'disabled'
                 
             else:
-                text['state'] = 'normal'
-                text.delete(1.0,'end')
-                text.insert('end', '*** PARSING ERROR FOR MASTER MQTT CONFIGURATION ***')
-                text['state'] = 'disabled'
+                writeToLog('*** PARSING ERROR FOR MASTER MQTT CONFIGURATION ***')                        
+
+                #text['state'] = 'normal'
+                #text.delete(1.0,'end')
+                #text.insert('end', '*** PARSING ERROR FOR MASTER MQTT CONFIGURATION ***')
+                #text['state'] = 'disabled'
         
     except ValueError:
         text['state'] = 'normal'

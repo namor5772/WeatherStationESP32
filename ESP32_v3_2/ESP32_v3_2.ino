@@ -1,4 +1,4 @@
-/* Code for ESP32 used in my Binda weather station */
+/* --Code for ESP32 used in my Binda weather station */
 #include <time.h>
 #include <Wire.h>
 #include <WiFi.h>
@@ -163,7 +163,7 @@ float getWindDirection() {
     else if ( 2675 > iwd ) { x = 157.5; } // SSE
     else if ( 2875 > iwd ) { x = 180.0; } // S
     else if ( 3250 > iwd ) { x = 112.5; } // ESE
-    else if ( 3500 > iwd ) { x = 135.0; } // SE     
+    else if ( 3600 > iwd ) { x = 135.0; } // SE     
     else if ( 4096 > iwd ) { x = 90.0;  } // E
     else                   { x = -1.0;  } // read error
     return x;
@@ -310,9 +310,8 @@ void callback(char* topic, byte *payload, unsigned int length) {
     
     /*  RESPOND TO PAYLOAD */
     // converts payload to both String and char[] for easier processing ???
-    int i;
+    int i; String sOut;
     Amsg = "";
-    String sOut;
     for (i=0; i<length; i++) { Amsg += (char)payload[i]; }  
     for (i=0; i<length; i++) { bufr[i]=(char)payload[i]; } bufr[i]=0;
     
@@ -326,7 +325,8 @@ void callback(char* topic, byte *payload, unsigned int length) {
         // move servo to a position in the range [8=0deg, 32=180deg] inclusive
         Amsg.remove(0,1); Amsg.trim();
         if (MoveServo(Amsg.toInt(),0)) {
-            sOut = "Servo moved to position "; sOut.concat(itoa(dutyCycle,bufs,10)); sOut.toCharArray(bufs,BMAX);
+            sOut = "Servo moved to position "; sOut.concat(itoa(dutyCycle,bufs,10));
+            sOut.toCharArray(bufs,BMAX);
             client.publish(SLAVE, bufs, false);
         } else {
             client.publish(SLAVE, "*** SERVO NOT MOVED - INVALID RANGE ***", false);
@@ -344,14 +344,20 @@ void callback(char* topic, byte *payload, unsigned int length) {
         readAllSensors(0); // 0 arguments sends to MASTER
         
     } else if (Amsg.equals("d")) {
-        // delete SensorData.csv file
-        client.publish(SLAVE, "Deleted SensorData.csv", false);
-        deleteFile(SPIFFS, "/SensorData.csv");
+        if (deleteFile(SPIFFS, "/SensorData.csv")) {
+            Serial.println("DELETED file SensorData.csv");
+            client.publish(SLAVE, "DELETED file SensorData.csv", false);               
+        } else {
+            Serial.println("FAILED to delete file SensorData.csv");
+            client.publish(SLAVE, "FAILED to delete file SensorData.csv", false);               
+        }
         
     } else if (Amsg.equals("o")) {
         // read/output SensorData.csv file
         client.publish(SLAVE, "Displaying SensorData.csv", false);
-        readFile(SPIFFS, "/SensorData.csv");
+        if (readFile(SPIFFS, "/SensorData.csv")) {
+            client.publish(SLAVE, "Nothing to display - File is empty", false);               
+        }
         
     } else if (Amsg.substring(0,4).equals("wifi")) {
         // read new WIFI credentials, send feedback to mqtt master.
@@ -437,7 +443,6 @@ void connect_MQTT_WIFI(bool bReconnect) {
             Serial.println("connected");
             client.publish(SLAVE, "Slave (re)connected to MQTT broker", false);
             client.subscribe(MASTER); 
-            // client.subscribe(SLAVE_END);
         }
         else {
             // Failed to connect to MQTT
@@ -475,13 +480,13 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     }
 }
 
-void readFile(fs::FS &fs, const char * path){
+boolean readFile(fs::FS &fs, const char * path){
     char c; int i=0;
 
     File file = fs.open(path);
     if(!file || file.isDirectory()){
         Serial.println("- failed to open file for reading");
-        return;
+        return file;
     }
     Serial.printf("Reading file: %s  Size: %d\n", path, file.size());
     
@@ -491,6 +496,7 @@ void readFile(fs::FS &fs, const char * path){
     }
     Serial.println("");
     file.close();
+    return file;
 }
 
 // send an arbitrary SPIFFS file (if it exists) in blocks to the MASTER
@@ -604,9 +610,9 @@ void readTIMEconfig(fs::FS &fs, const char * path){
     Serial.print("time minGap="); Serial.println(time_minGap);
 }
 
-void deleteFile(fs::FS &fs, const char * path){
-    Serial.printf("Deleting file: %s\r\n", path);
-    fs.remove(path) ? Serial.println("- file deleted") : Serial.println("- delete failed");
+// Basic wrapper. Returns error in boolean
+bool deleteFile(fs::FS &fs, const char * path){
+    return fs.remove(path);
 }
 
 // Basic wrapper. No messages or error checking.
@@ -911,13 +917,18 @@ void setup() {
     // Start the I2C interface
     Wire.begin();
 
+    /* Setup and attach the LED PWM Channel to the GPIO Pin */
+    // setup LED PWM Channel for servo (Tower Pro SG90)
+    // this has a 180 deg range with duty cycle ra
+    ledcSetup(PWMChannel, PWMFreq, PWMResolution);
+    ledcAttachPin(SERVO_GPIO, PWMChannel);
+    ledcWrite(PWMChannel, dutyCycle);
+    
     // SETUP SPIFFS and display base dir   
     if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)){
         Serial.println("SPIFFS Mount Failed");
         return;
-    }
-    Serial.println("");
-    listDir(SPIFFS, "/", 0);
+    } listDir(SPIFFS, "/", 0);
 
     // Now can read the WIFI & MQTT credentials from their SPIFFS files into the
     // global variables <wifi_*>, <mqtt_*> <time_*> and respectively.
@@ -997,18 +1008,11 @@ void setup() {
     }
 
     // setup Wind speed and Rain gauge sensors. setup GPIO pins for interrupts.
-    pinMode(WIND_GPIO, INPUT_PULLUP); attachInterrupt(WIND_GPIO, WIND_ISR, FALLING);
-    pinMode(RAIN_GPIO, INPUT_PULLUP); attachInterrupt(RAIN_GPIO, RAIN_ISR, FALLING);
+    pinMode(WIND_GPIO, INPUT); attachInterrupt(WIND_GPIO, WIND_ISR, FALLING);
+    pinMode(RAIN_GPIO, INPUT); attachInterrupt(RAIN_GPIO, RAIN_ISR, FALLING);
 
     // setup GPIO pin for relay  
     pinMode(RELAY_GPIO, OUTPUT); digitalWrite(RELAY_GPIO, LOW);
-    
-    /* Setup and attach the LED PWM Channel to the GPIO Pin */
-    // setup LED PWM Channel for servo (Tower Pro SG90)
-    // this has a 180 deg range with duty cycle ra
-    ledcSetup(PWMChannel, PWMFreq, PWMResolution);
-    ledcAttachPin(SERVO_GPIO, PWMChannel);
-    ledcWrite(PWMChannel, dutyCycle);
 }
 
 

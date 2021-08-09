@@ -48,7 +48,7 @@ char time_minGap[BMAX]="1"; // string version of above (stored in config file)
 int hourGap=24;
 
 /*  ISR GENERAL */    
-volatile long debouncing_time = 20; // milliseconds
+volatile long debouncing_time = 15; // milliseconds
 unsigned long time_now;
 #define DEL1 8000
 #define DEL2 300
@@ -73,7 +73,7 @@ volatile unsigned long aRAIN[nRAIN]; // array to store millis time stamps for ra
 
 /* SERVO */
 #define SERVO_GPIO 26
-int dutyCycle = 20; // experimental range [9=0deg, 32=180deg]
+int dutyCycle = 20; // experimental range [8=0deg, 32=180deg]
 const int PWMFreq = 50;
 const int PWMChannel = 0; 
 const int PWMResolution = 8;
@@ -210,10 +210,6 @@ void readAllSensors(int pFlag) {
     // put these sensor readings into a space efficient comma delimited char array in bufa
     int i, j=0, k, n; 
     
-/*
-    char buf[10][10],bufa[100+35];
-*/  
-  
     char buf1[10],buf2[10],buf3[10],buf4[10],buf5[10],buf6[10],
          buf7[10],buf8[10],buf9[10],buf10[10],bufa[100+35];
          
@@ -223,19 +219,6 @@ void readAllSensors(int pFlag) {
     else { // if pFlag==1
         k = 22-3; strftime(bufa,100,"%d-%b-%Y %H:%M",&tms); } // ignore seconds
 
-/*
-    dtostrf(rt,8,2,buf[0]); // temperature as string (8 chars + 0 at end => 9 chars from buffer)
-    dtostrf(rp,8,2,buf[1]); // pressure as string
-    dtostrf(rh,8,2,buf[2]); // humidity as string
-    dtostrf(rr,8,2,buf[3]); // rainfall as string
-    dtostrf(rs,8,2,buf[4]); // wind speed as string
-    dtostrf(rd,8,1,buf[5]); // wind direction as string
-    dtostrf(r3,8,2,buf[6]); // RTC temp as string
-    dtostrf(rc,8,1,buf[7]); // current as string
-    dtostrf(rv,8,0,buf[8]); // bus voltage as string
-    dtostrf(rw,8,1,buf[9]); // power (in milliwatts) as string
-*/
-        
     dtostrf(rt,8,2,buf1); // temperature as string (8 chars + 0 at end => 9 chars from buffer)
     dtostrf(rp,8,2,buf2); // pressure as string
     dtostrf(rh,8,2,buf3); // humidity as string
@@ -246,16 +229,7 @@ void readAllSensors(int pFlag) {
     dtostrf(rc,8,1,buf8); // current as string
     dtostrf(rv,8,0,buf9); // bus voltage as string
     dtostrf(rw,8,1,buf10); // power (in milliwatts) as string
-    
     bufa[k-2] = 44; bufa[k-1] = 32;
-    
-/*    
-    for (n=0;n<9;n++) {
-        for (i=0;i<8;i++) {buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];}  bufa[k+10*n+8-j]=44; bufa[k+10*n+9-j]=32;
-    }
-    for (i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=10; bufa[k+10*n+9-j]=0;
-*/  
-  
     for (i=0;i<8;i++) {buf1[i]==32 ? j++ :bufa[k+10*0+i-j]=buf1[i];}  bufa[k+10*0+8-j]=44; bufa[k+10*0+9-j]=32;
     for (i=0;i<8;i++) {buf2[i]==32 ? j++ :bufa[k+10*1+i-j]=buf2[i];}  bufa[k+10*1+8-j]=44; bufa[k+10*1+9-j]=32;
     for (i=0;i<8;i++) {buf3[i]==32 ? j++ :bufa[k+10*2+i-j]=buf3[i];}  bufa[k+10*2+8-j]=44; bufa[k+10*2+9-j]=32;
@@ -266,8 +240,6 @@ void readAllSensors(int pFlag) {
     for (i=0;i<8;i++) {buf8[i]==32 ? j++ :bufa[k+10*7+i-j]=buf8[i];}  bufa[k+10*7+8-j]=44; bufa[k+10*7+9-j]=32;
     for (i=0;i<8;i++) {buf9[i]==32 ? j++ :bufa[k+10*8+i-j]=buf9[i];}  bufa[k+10*8+8-j]=44; bufa[k+10*8+9-j]=32;
     for (i=0;i<8;i++){buf10[i]==32 ? j++ :bufa[k+10*9+i-j]=buf10[i];} bufa[k+10*9+8-j]=10; bufa[k+10*9+9-j]=0;
-
-    
     Serial.print(bufa);
 
     switch (pFlag) {
@@ -387,14 +359,20 @@ void callback(char* topic, byte *payload, unsigned int length) {
         readAllSensors(0); // 0 arguments sends to MASTER
         
     } else if (Amsg.equals("d")) {
-        // delete SensorData.csv file
-        client.publish(SLAVE, "Deleted SensorData.csv", false);
-        deleteFile(SPIFFS, "/SensorData.csv");
+        if (deleteFile(SPIFFS, "/SensorData.csv")) {
+            Serial.println("DELETED file SensorData.csv");
+            client.publish(SLAVE, "DELETED file SensorData.csv", false);               
+        } else {
+            Serial.println("FAILED to delete file SensorData.csv");
+            client.publish(SLAVE, "FAILED to delete file SensorData.csv", false);               
+        }
         
     } else if (Amsg.equals("o")) {
         // read/output SensorData.csv file
         client.publish(SLAVE, "Displaying SensorData.csv", false);
-        readFile(SPIFFS, "/SensorData.csv");
+        if (readFile(SPIFFS, "/SensorData.csv")) {
+            client.publish(SLAVE, "Nothing to display - File is empty", false);               
+        }
         
     } else if (Amsg.substring(0,4).equals("wifi")) {
         // read new WIFI credentials, send feedback to mqtt master.
@@ -480,7 +458,6 @@ void connect_MQTT_WIFI(bool bReconnect) {
             Serial.println("connected");
             client.publish(SLAVE, "Slave (re)connected to MQTT broker", false);
             client.subscribe(MASTER); 
-            // client.subscribe(SLAVE_END);
         }
         else {
             // Failed to connect to MQTT
@@ -518,13 +495,13 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     }
 }
 
-void readFile(fs::FS &fs, const char * path){
+boolean readFile(fs::FS &fs, const char * path){
     char c; int i=0;
 
     File file = fs.open(path);
     if(!file || file.isDirectory()){
         Serial.println("- failed to open file for reading");
-        return;
+        return file;
     }
     Serial.printf("Reading file: %s  Size: %d\n", path, file.size());
     
@@ -534,6 +511,7 @@ void readFile(fs::FS &fs, const char * path){
     }
     Serial.println("");
     file.close();
+    return file;
 }
 
 // send an arbitrary SPIFFS file (if it exists) in blocks to the MASTER
@@ -648,9 +626,8 @@ void readTIMEconfig(fs::FS &fs, const char * path){
     Serial.print("time minGap="); Serial.println(time_minGap);
 }
 
-void deleteFile(fs::FS &fs, const char * path){
-    Serial.printf("Deleting file: %s\r\n", path);
-    fs.remove(path) ? Serial.println("- file deleted") : Serial.println("- delete failed");
+bool deleteFile(fs::FS &fs, const char * path){
+    return fs.remove(path);
 }
 
 // Basic wrapper. No messages or error checking.
@@ -1056,7 +1033,8 @@ void setup() {
 
     // setup Wind speed and Rain gauge sensors. setup GPIO pins for interrupts.
     pinMode(WIND_GPIO, INPUT_PULLUP); attachInterrupt(WIND_GPIO, WIND_ISR, FALLING);
-    pinMode(RAIN_GPIO, INPUT_PULLUP); attachInterrupt(RAIN_GPIO, RAIN_ISR, FALLING);
+//    pinMode(RAIN_GPIO, INPUT_PULLUP); attachInterrupt(RAIN_GPIO, RAIN_ISR, FALLING);
+    pinMode(RAIN_GPIO, INPUT); attachInterrupt(RAIN_GPIO, RAIN_ISR, FALLING);
 
     // setup GPIO pin for relay  
     pinMode(RELAY_GPIO, OUTPUT); digitalWrite(RELAY_GPIO, LOW);
