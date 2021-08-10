@@ -204,35 +204,60 @@ void readAllSensors(int pFlag) {
     
     // read current, bus voltage and power from INA260 sensor into float variables
     float rc = ina.readCurrent(); // in milliamps
-    float rv = ina.readBusVoltage(); // in Volts
+    float rv = ina.readBusVoltage()/1000.0F; // in Volts
     float rw = ina.readPower(); // rw = (r)ead milli(w)atts
     
     // put these sensor readings into a space efficient comma delimited char array in bufa
-    int i, j=0, k, n; char buf[10][10], bufa[10*10+35];
+    int i, j=0, k, n; char buf[10][10], bufa[10*10+35], buft[30];
          
     // put global time variable tms into start of bufa (size depends on pFlag)
     if (pFlag==0) {k=22; strftime(bufa,100,"%d-%b-%Y %H:%M:%S",&tms);} // include seconds
     else {k=22-3; strftime(bufa,100,"%d-%b-%Y %H:%M",&tms);} // ignore seconds
-
+    strcpy(buft,bufa);
+        
     dtostrf(rt,8,2,buf[0]); // temperature as string (8 chars + 0 at end => 9 chars from buffer)
-    dtostrf(rp,8,2,buf[1]); // pressure as string
-    dtostrf(rh,8,2,buf[2]); // humidity as string
+    dtostrf(rp,8,1,buf[1]); // pressure as string
+    dtostrf(rh,8,1,buf[2]); // humidity as string
     dtostrf(rr,8,2,buf[3]); // rainfall as string
     dtostrf(rs,8,2,buf[4]); // wind speed as string
     dtostrf(rd,8,1,buf[5]); // wind direction as string
     dtostrf(r3,8,2,buf[6]); // RTC temp as string
     dtostrf(rc,8,1,buf[7]); // current as string
-    dtostrf(rv,8,0,buf[8]); // bus voltage as string
+    dtostrf(rv,8,2,buf[8]); // bus voltage as string
     dtostrf(rw,8,1,buf[9]); // power (in milliwatts) as string
     bufa[k-2] = 44; bufa[k-1] = 32;
     for(n=0;n<9;n++){for(i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=44; bufa[k+10*n+9-j]=32;}
     for(i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=10; bufa[k+10*n+9-j]=0;
     Serial.print(bufa);
 
+    String sOut;
     switch (pFlag) {
         case 0: // publish for MASTER to see
-            bufa[k+10*9+8-j] = 0; // don't want to display '\n'
-            client.publish(SLAVE, bufa, false);
+            // bufa[k+10*9+8-j] = 0; // don't want to display '\n'
+            //client.publish(SLAVE, bufa, false);
+            sOut = "Timestamp   "; sOut.concat(buft); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Temperature "; sOut.concat(buf[0]); sOut.concat(" C"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Pressure    "; sOut.concat(buf[1]); sOut.concat(" hPa"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Humidity    "; sOut.concat(buf[2]); sOut.concat(" %"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Rainfall    "; sOut.concat(buf[3]); sOut.concat(" mm"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Wind speed  "; sOut.concat(buf[4]); sOut.concat(" km/h"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Wind dir    "; sOut.concat(buf[5]); sOut.concat(" deg"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "RTC temp    "; sOut.concat(buf[6]); sOut.concat(" C"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Current     "; sOut.concat(buf[7]); sOut.concat(" mA"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Voltage     "; sOut.concat(buf[8]); sOut.concat(" V"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            sOut = "Power       "; sOut.concat(buf[9]); sOut.concat(" mW"); sOut.toCharArray(bufs,BMAX);
+            client.publish(SLAVE, bufs, false);
+            
             break;
         case 1: // append to SensorData.csv file
             appendFileBasic(SPIFFS, "/SensorData.csv", bufa); // append line with '\n'

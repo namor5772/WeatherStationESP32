@@ -22,17 +22,6 @@ fSize = 0
 bPrint = True
 
 
-def writeToLog(msg):
-    numlines = int(text.index('end - 1 line').split('.')[0])
-    text['state'] = 'normal'
-    if numlines==24:
-        text.delete(1.0, 2.0)
-    if text.index('end-1c')!='1.0':
-        text.insert('end', '\n')
-    text.insert('end', msg)
-    text['state'] = 'disabled'
-
-
 # stop MQTT loop before closing this app
 def onWindowExit():
     sleep(1)
@@ -55,10 +44,9 @@ def Enter(*args):
 
         if c[0]!='Xmqtt': # 'send' string list c to slave
             client.publish(pub_topic,s)
-            writeToLog('\n'+s)                        
-            #text['state'] = 'normal'
-            #text.insert('end', '\n'+s)
-            #text['state'] = 'disabled'
+            text['state'] = 'normal'
+            text.insert('end', '\n'+s)
+            text['state'] = 'disabled'
             
         else: # read in mqtt config for this master py program
             # must have 4 parameters 
@@ -74,18 +62,13 @@ def Enter(*args):
                     password=c[4]
 
                     # display proposed login parameters
-                    writeToLog('broker='+broker)                        
-                    writeToLog('port='+str(port))                        
-                    writeToLog('username='+username)                        
-                    writeToLog('password='+password)                        
-                    
-                    #text['state'] = 'normal'
-                    #text.delete(1.0,'end')
-                    #text.insert('end', 'broker='+broker)
-                    #text.insert('end', '\nport='+str(port))
-                    #text.insert('end', '\nusername='+username)
-                    #text.insert('end', '\npassword='+password+'\n')
-                    #text['state'] = 'disabled'
+                    text['state'] = 'normal'
+                    text.delete(1.0,'end')
+                    text.insert('end', 'broker='+broker)
+                    text.insert('end', '\nport='+str(port))
+                    text.insert('end', '\nusername='+username)
+                    text.insert('end', '\npassword='+password+'\n')
+                    text['state'] = 'disabled'
 
                     # disconnect nicely before reconnecting
                     client.loop_stop()
@@ -113,12 +96,10 @@ def Enter(*args):
                     text['state'] = 'disabled'
                 
             else:
-                writeToLog('*** PARSING ERROR FOR MASTER MQTT CONFIGURATION ***')                        
-
-                #text['state'] = 'normal'
-                #text.delete(1.0,'end')
-                #text.insert('end', '*** PARSING ERROR FOR MASTER MQTT CONFIGURATION ***')
-                #text['state'] = 'disabled'
+                text['state'] = 'normal'
+                text.delete(1.0,'end')
+                text.insert('end', '*** PARSING ERROR FOR MASTER MQTT CONFIGURATION ***')
+                text['state'] = 'disabled'
         
     except ValueError:
         text['state'] = 'normal'
@@ -145,26 +126,27 @@ root = Tk()
 root.title("Binda IOT Weather Station")
 root.protocol('WM_DELETE_WINDOW', onWindowExit)
 root.geometry('+20+20')
-
-mainframe = ttk.Frame(root, padding="3 3 12 12")
-mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
-inp = StringVar()
-inp_entry = ttk.Entry(mainframe, width=7, textvariable=inp)
-inp_entry.grid(column=2, row=1, sticky=(W, E))
-inp_entry.configure(font = 'TkFixedFont')
+mainframe = ttk.Frame(root, padding="3 3 12 12")
+mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 
-text = Text(mainframe, width=100, height=20, wrap="word", borderwidth=3, relief="flat")
-text.configure(font = 'TkFixedFont')
+inp = StringVar()
+inp_entry = ttk.Entry(mainframe, textvariable=inp)
+inp_entry.grid(column=2, row=1, sticky=(W, E))
+
+Label1 = ttk.Label(mainframe, text="Type message :")
+Label1.grid(column=1, row=1, sticky=E)
+
+Label2 = ttk.Label(mainframe, text="Results :")
+Label2.grid(column=1, row=2, sticky=(N, E))
+
+text = Text(mainframe, width=60, height=20, wrap="word", borderwidth=3, relief="groove")
 text.insert('1.0', '')
 text['state'] = 'disabled'
 text.grid(column=2, row=2, sticky='nwes')
-
-ttk.Label(mainframe, text="Type message :").grid(column=1, row=1, sticky=E)
-ttk.Label(mainframe, text="Results :").grid(column=1, row=2, sticky=(N, E))
-
+  
 for child in mainframe.winfo_children(): 
     child.grid_configure(padx=5, pady=5)
 
@@ -175,8 +157,8 @@ root.bind("<Return>", Enter)
 # Called when a message has been published to the MQTT broker
 def on_publish(mosq, obj, mid):
     s = inp.get()
-    inp.set("")
-    s2 = pub_topic + ": "+s
+#    s2 = pub_topic + ": "+s
+    s2 = ""+s
     inp.set("")
     
     text['state'] = 'normal'
@@ -234,7 +216,8 @@ def on_message(client, userdata, msg):
         else:
             s2 = " blocks read  "
             
-        s = msg.topic+"> "+str(icount)+s2+str(ibytes)+" bytes  "+aTXT
+#        s = msg.topic+"> "+str(icount)+s2+str(ibytes)+" bytes  "+aTXT
+        s = "  "+str(icount)+s2+str(ibytes)+" bytes  "+aTXT
 
         text['state'] = 'normal'
         text.insert('end', '\n'+s)
@@ -248,21 +231,23 @@ def on_message(client, userdata, msg):
         
         sp = len(msg.payload);
         ibytes += sp
-        s = msg.topic+"> Block "+str(icount)+" : "+str(sp)+" bytes"
+#        s = msg.topic+"> Block "+str(icount)+" : "+str(sp)+" bytes"
+        s = "  Block "+str(icount)+" : "+str(sp)+" bytes"
 
         text['state'] = 'normal'
         if icount==1:
-            text.insert('end', '\n'+msg.topic+"> .")
+#            text.insert('end', '\n'+msg.topic+"  .")
+            text.insert('end', '\n'+"  .")
         else:            
             text.insert('end', '.')
         text['state'] = 'disabled'
         
     else:
         if bPrint:
-            s = msg.topic+": "+message
-
+            #s = msg.topic+": "+message
+    
             text['state'] = 'normal'
-            text.insert('end', '\n'+s)
+            text.insert('end', '\n  '+message)
             text['state'] = 'disabled'
             
         else:
