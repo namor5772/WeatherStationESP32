@@ -40,8 +40,8 @@ INA260
 ]
 [
 J3
-SIP6
-Conn_6
+RJ11
+RJ11
 
 
 
@@ -56,7 +56,7 @@ AX2_1
 ]
 [
 U4
-ESP32_DIP38
+ESP32_WD
 ESP32_DevKitc_V4
 
 
@@ -72,7 +72,7 @@ DS3231M MEMS RTC
 ]
 [
 U3
-DIP6_S1
+RELAY1
 5V Relay board
 
 
@@ -80,7 +80,7 @@ DIP6_S1
 ]
 [
 C1
-package name for PCB layout
+AX2_1
 0.1mF
 
 
@@ -104,15 +104,15 @@ AX2_1
 ]
 [
 J4
-SIP6
-Conn_6
+RJ11
+RJ11
 
 
 
 ]
 [
 C3
-package name for PCB layout
+AX2_1
 10pF
 
 
@@ -155,12 +155,12 @@ U1-4
 )
 (
 3V3
-R1-1
-R2-1
-R3-1
 B2-1
 B1-1
 U4-1
+R1-1
+R2-1
+R3-1
 J5-1
 )
 (
