@@ -161,7 +161,7 @@ float getWindDirection() {
     else if ( 2185 > iwd ) { x = 67.5;  } // ENE
     else if ( 2375 > iwd ) { x = 45.0;  } // NE
     else if ( 2675 > iwd ) { x = 157.5; } // SSE
-    else if ( 2875 > iwd ) { x = 180.0; } // S
+    else if ( 2900 > iwd ) { x = 180.0; } // S
     else if ( 3250 > iwd ) { x = 112.5; } // ESE
     else if ( 3600 > iwd ) { x = 135.0; } // SE     
     else if ( 4096 > iwd ) { x = 90.0;  } // E
@@ -691,10 +691,18 @@ void parseWIFIcredentials(int iTo) {
         // depending on iTo flag
         switch (iTo) {
             case 0:
-                // send feedback to MQTT master...
+                // send feedback to MQTT master... nicely formatted multi-messages
+/*                
                 sOut = "valid parse: new ssid=";  sOut += wifi_ssid;
                 sOut += "  password="; sOut += wifi_password; sOut.toCharArray(bufr,MQTTB);
                 client.publish(SLAVE, bufr, false);
+*/
+                sOut = "VALID PARSE with new parameters:"; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "ssid=     "; sOut += wifi_ssid; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "password= "; sOut += wifi_password; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
                 break; 
             case 1:
                 // send feedback to Bluetooth client...
@@ -713,13 +721,22 @@ void parseWIFIcredentials(int iTo) {
         appendFileBasic(SPIFFS, "/WIFIconfig.txt", wifi_password); appendFileBasic(SPIFFS, "/WIFIconfig.txt", cLF);
     }
     else {
-        // depending on iTo flag
+        // send feedback depending on iTo flag
         switch (iTo) {
             case 0:
-                // On parsing failure send appropriate feedback to MQTT master
+                // to MQTT master... nicely formatted multi-messages
+/*                
                 (n==4) ? sOut = "current ssid=" : sOut = "cannot parse: unchanged ssid="; 
                 sOut += wifi_ssid; sOut += "  password="; sOut += wifi_password; sOut.toCharArray(bufr,MQTTB);
                 client.publish(SLAVE, bufr, false);
+*/
+                (n==4) ? sOut = "Current parameters are:" : sOut = "CANNOT PARSE. Current parameters are:"; 
+                sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "ssid=     "; sOut += wifi_ssid; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "password= "; sOut += wifi_password; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
                 break; 
             case 1:
                 // On parsing failure send appropriate feedback to Bluetooth client
@@ -776,13 +793,25 @@ void parseMQTTcredentials(int iTo) {
         // send feedback depending on iTo flag
         switch (iTo) {
             case 0:
-                // to MQTT master...
+                // to MQTT master... nicely formatted multi-messages
+/*                
                 sOut = "valid parse: new server="; sOut += mqtt_server;
                 sOut += "  port="; sOut += mqtt_port;  
                 sOut += "  user="; sOut += mqtt_user;  
                 sOut += "  password="; sOut += mqtt_password;  
                 sOut.toCharArray(bufr,MQTTB);
                 client.publish(SLAVE, bufr, false);
+*/
+                sOut = "VALID PARSE with new parameters:"; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "server=   "; sOut += mqtt_server; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "port=     "; sOut += mqtt_port; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "user=     "; sOut += mqtt_user; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "password= "; sOut += mqtt_password; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
                 break; 
             case 1:
                 // to Bluetooth client...
@@ -808,14 +837,18 @@ void parseMQTTcredentials(int iTo) {
         // on parsing failure send feedback depending on iTo flag
         switch (iTo) {
             case 0:
-                // to MQTT master...
-                (n==4) ? sOut = "current server=" : sOut = "cannot parse: unchanged server="; 
-                sOut += mqtt_server;
-                sOut += "  port="; sOut += mqtt_port;  
-                sOut += "  user="; sOut += mqtt_user;  
-                sOut += "  password="; sOut += mqtt_password;  
-                sOut.toCharArray(bufr,MQTTB);
-                client.publish(SLAVE, bufr, false);
+                // to MQTT master... nicely formatted multi-messages
+                (n==4) ? sOut = "Current parameters are:" : sOut = "CANNOT PARSE. Current parameters are:"; 
+                sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "server=   "; sOut += mqtt_server; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "port=     "; sOut += mqtt_port; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "user=     "; sOut += mqtt_user; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "password= "; sOut += mqtt_password; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
                 break; 
             case 1:
                 // to Bluetooth client...
@@ -872,10 +905,17 @@ void parseTIMEcredentials(int iTo) {
         // send feedback depending on iTo flag
         switch (iTo) {
             case 0:
-                // to MQTT master...
+                // to MQTT master... nicely formatted multi-messages
+/*                
                 sOut = "valid parse: new minGap="; sOut += time_minGap; sOut.toCharArray(bufr,MQTTB);
                 client.publish(SLAVE, bufr, false);
+*/
+                sOut = "VALID PARSE with new parameter:"; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "time gap (mins)=   "; sOut += time_minGap; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
                 break; 
+                
             case 1:
                 // to Bluetooth client...
                 SerialBT.print("valid parse: new minGap="); SerialBT.println(time_minGap);
@@ -895,10 +935,17 @@ void parseTIMEcredentials(int iTo) {
         // on parsing failure send feedback depending on iTo flag
         switch (iTo) {
             case 0:
-                // to MQTT master...
+                // to MQTT master... nicely formatted multi-messages
+/*                
                 (n==4) ? sOut = "current minGap=" : sOut = "cannot parse: unchanged minGap="; 
                 sOut += time_minGap; sOut.toCharArray(bufr,MQTTB);
                 client.publish(SLAVE, bufr, false);
+*/
+                (n==4) ? sOut = "Current parameter is:" : sOut = "CANNOT PARSE. Current parameter is:"; 
+                sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
+                sOut = "time gap (mins)=   "; sOut += time_minGap; sOut.toCharArray(bufs,BMAX);
+                client.publish(SLAVE, bufs, false);
                 break; 
             case 1:
                 // to Bluetooth client...
