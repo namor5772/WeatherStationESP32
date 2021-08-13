@@ -84,10 +84,38 @@ File,19
     [{"Pin" : "6"},"Body","Body","Body","Body",{"Pin" : "12"}]
     ]
   },
+  { "Name" : "DIP28N", "Locked" : false,
+    "Rows" : [
+    [{"Pin" : "1"},"Free","Free",{"Pin" : "28"}],
+    [{"Pin" : "2"},"Body","Body",{"Pin" : "27"}],
+    [{"Pin" : "3"},"Body","Body",{"Pin" : "26"}],
+    [{"Pin" : "4"},"Body","Body",{"Pin" : "25"}],
+    [{"Pin" : "5"},"Body","Body",{"Pin" : "24"}],
+    [{"Pin" : "6"},"Body","Body",{"Pin" : "23"}],
+    [{"Pin" : "7"},"Body","Body",{"Pin" : "22"}],
+    [{"Pin" : "8"},"Body","Body",{"Pin" : "21"}],
+    [{"Pin" : "9"},"Body","Body",{"Pin" : "20"}],
+    [{"Pin" : "10"},"Body","Body",{"Pin" : "19"}],
+    [{"Pin" : "11"},"Body","Body",{"Pin" : "18"}],
+    [{"Pin" : "12"},"Body","Body",{"Pin" : "17"}],
+    [{"Pin" : "13"},"Body","Body",{"Pin" : "16"}],
+    [{"Pin" : "14"},"Body","Body",{"Pin" : "15"}]
+    ]
+  },
   { "Name" : "DIP6", "Locked" : false,
     "Rows" : [
     [{"Pin" : "1"},"Free","Free",{"Pin" : "6"}],
     [{"Pin" : "2"},"Body","Body",{"Pin" : "5"}],
+    [{"Pin" : "3"},"Body","Body",{"Pin" : "4"}]
+    ]
+  },
+  { "Name" : "DIP6_S1", "Locked" : true,
+    "Rows" : [
+    [{"Pin" : "1"},"Body","Body",{"Pin" : "6"}],
+    [{"Pin" : "2"},"Body","Body",{"Pin" : "5"}],
+    ["Body","Body","Body","Body"],
+    ["Body","Body","Body","Body"],
+    ["Body","Body","Body","Body"],
     [{"Pin" : "3"},"Body","Body",{"Pin" : "4"}]
     ]
   },
@@ -167,24 +195,6 @@ File,19
     [{"Pin" : "14"},"Body","Body","Body","Body","Body",{"Pin" : "15"}]
     ]
   },
-  { "Name" : "DIP28N", "Locked" : false,
-    "Rows" : [
-    [{"Pin" : "1"},"Free","Free",{"Pin" : "28"}],
-    [{"Pin" : "2"},"Body","Body",{"Pin" : "27"}],
-    [{"Pin" : "3"},"Body","Body",{"Pin" : "26"}],
-    [{"Pin" : "4"},"Body","Body",{"Pin" : "25"}],
-    [{"Pin" : "5"},"Body","Body",{"Pin" : "24"}],
-    [{"Pin" : "6"},"Body","Body",{"Pin" : "23"}],
-    [{"Pin" : "7"},"Body","Body",{"Pin" : "22"}],
-    [{"Pin" : "8"},"Body","Body",{"Pin" : "21"}],
-    [{"Pin" : "9"},"Body","Body",{"Pin" : "20"}],
-    [{"Pin" : "10"},"Body","Body",{"Pin" : "19"}],
-    [{"Pin" : "11"},"Body","Body",{"Pin" : "18"}],
-    [{"Pin" : "12"},"Body","Body",{"Pin" : "17"}],
-    [{"Pin" : "13"},"Body","Body",{"Pin" : "16"}],
-    [{"Pin" : "14"},"Body","Body",{"Pin" : "15"}]
-    ]
-  },
   { "Name" : "DIP40", "Locked" : true,
     "Rows" : [
     [{"Pin" : "1"},"Body","Free","Free","Free","Body",{"Pin" : "40"}],
@@ -207,16 +217,6 @@ File,19
     [{"Pin" : "18"},"Body","Body","Body","Body","Body",{"Pin" : "23"}],
     [{"Pin" : "19"},"Body","Body","Body","Body","Body",{"Pin" : "22"}],
     [{"Pin" : "20"},"Body","Body","Body","Body","Body",{"Pin" : "21"}]
-    ]
-  },
-  { "Name" : "DIP6_S1", "Locked" : true,
-    "Rows" : [
-    [{"Pin" : "1"},"Body","Body",{"Pin" : "6"}],
-    [{"Pin" : "2"},"Body","Body",{"Pin" : "5"}],
-    ["Body","Body","Body","Body"],
-    ["Body","Body","Body","Body"],
-    ["Body","Body","Body","Body"],
-    [{"Pin" : "3"},"Body","Body",{"Pin" : "4"}]
     ]
   },
   { "Name" : "ESP32_WD", "Locked" : true,
@@ -264,11 +264,11 @@ File,19
     ["Free","Free","Free","Free","Free","Free","Body"],
     ["Free","Free","Free","Free","Free","Free","Body"],
     ["Body","Body","Body","Body","Body","Body","Body"],
-    ["Body","Free","Free","Free","Body",{"Pin" : "6"},"Body"],
+    ["Body","Free","Free","Free","Body","Body",{"Pin" : "6"}],
     ["Body","Free","Free","Free","Body","Body","Body"],
-    ["Body","Free","Free","Free",{"Pin" : "1"},{"Pin" : "5"},"Body"],
+    ["Body","Free","Free","Free",{"Pin" : "1"},"Body",{"Pin" : "5"}],
     ["Body","Free","Free","Free",{"Pin" : "2"},"Body","Body"],
-    ["Body","Free","Free","Free",{"Pin" : "3"},{"Pin" : "4"},"Body"],
+    ["Body","Free","Free","Free",{"Pin" : "3"},"Body",{"Pin" : "4"}],
     ["Body","Body","Body","Body","Body","Body","Body"],
     ["Free","Free","Free","Free","Free","Free","Body"],
     ["Free","Free","Free","Free","Free","Free","Body"]
@@ -353,6 +353,19 @@ File,19
     [{"Pin" : "6"}],
     [{"Pin" : "7"}],
     [{"Pin" : "8"}]
+    ]
+  },
+  { "Name" : "SIP9", "Locked" : true,
+    "Rows" : [
+    [{"Pin" : "1"}],
+    [{"Pin" : "2"}],
+    [{"Pin" : "3"}],
+    [{"Pin" : "4"}],
+    [{"Pin" : "5"}],
+    [{"Pin" : "6"}],
+    [{"Pin" : "7"}],
+    [{"Pin" : "8"}],
+    [{"Pin" : "9"}]
     ]
   },
   { "Name" : "SIP10", "Locked" : true,
@@ -564,19 +577,6 @@ File,19
     "Rows" : [
     ["Body",{"Pin" : "1"},{"Pin" : "2"},{"Pin" : "3"},{"Pin" : "4"},{"Pin" : "5"},{"Pin" : "6"},{"Pin" : "7"},{"Pin" : ""},"Body"],
     ["Body","Body","Body","Body","Body","Body","Body","Body","Body","Body"]
-    ]
-  },
-  { "Name" : "SIP9", "Locked" : true,
-    "Rows" : [
-    [{"Pin" : "1"}],
-    [{"Pin" : "2"}],
-    [{"Pin" : "3"}],
-    [{"Pin" : "4"}],
-    [{"Pin" : "5"}],
-    [{"Pin" : "6"}],
-    [{"Pin" : "7"}],
-    [{"Pin" : "8"}],
-    [{"Pin" : "9"}]
     ]
   }
 ],
@@ -1105,22 +1105,6 @@ File,19
     { "X5" : 6, "Y5" : 10, "DX5" : 7, "DY5" : 0}
     ]
   },
-  { "Name" : "TO220_5_Lead", "Locked" : true,
-    "Pins" : [
-    { "Name" : "1", "X5" : 17, "Y5" : 2 },
-    { "Name" : "2", "X5" : 17, "Y5" : 7 },
-    { "Name" : "3", "X5" : 17, "Y5" : 12 },
-    { "Name" : "4", "X5" : 17, "Y5" : 17 },
-    { "Name" : "5", "X5" : 17, "Y5" : 22 }
-    ],
-    "Lines" : [
-    { "X5" : 15, "Y5" : 0, "DX5" : 7, "DY5" : 0},
-    { "X5" : 20, "Y5" : 0, "DX5" : 0, "DY5" : 24},
-    { "X5" : 22, "Y5" : 24, "DX5" : -7, "DY5" : 0},
-    { "X5" : 15, "Y5" : 24, "DX5" : 0, "DY5" : -24},
-    { "X5" : 22, "Y5" : 0, "DX5" : 0, "DY5" : 24}
-    ]
-  },
   { "Name" : "TO5", "Locked" : false,
     "Pins" : [
     { "Name" : "3", "X5" : 7, "Y5" : 2 },
@@ -1167,6 +1151,22 @@ File,19
     { "X5" : 8, "Y5" : 14, "DX5" : 0, "DY5" : 2},
     { "X5" : 5, "Y5" : 14, "DX5" : 0, "DY5" : 2},
     { "X5" : 5, "Y5" : 16, "DX5" : 3, "DY5" : 0}
+    ]
+  },
+  { "Name" : "TO220_5_Lead", "Locked" : true,
+    "Pins" : [
+    { "Name" : "1", "X5" : 17, "Y5" : 2 },
+    { "Name" : "2", "X5" : 17, "Y5" : 7 },
+    { "Name" : "3", "X5" : 17, "Y5" : 12 },
+    { "Name" : "4", "X5" : 17, "Y5" : 17 },
+    { "Name" : "5", "X5" : 17, "Y5" : 22 }
+    ],
+    "Lines" : [
+    { "X5" : 15, "Y5" : 0, "DX5" : 7, "DY5" : 0},
+    { "X5" : 20, "Y5" : 0, "DX5" : 0, "DY5" : 24},
+    { "X5" : 22, "Y5" : 24, "DX5" : -7, "DY5" : 0},
+    { "X5" : 15, "Y5" : 24, "DX5" : 0, "DY5" : -24},
+    { "X5" : 22, "Y5" : 0, "DX5" : 0, "DY5" : 24}
     ]
   },
   { "Name" : "TO92", "Locked" : true,
