@@ -1,0 +1,17 @@
+====+  Parts List for C:\Users\roman\Documents\GitHub\WeatherStationESP32\data\WeatherStationESP32_v3b.dsn  +====
+
+C1                            1   0.1mF,Capacitor Electrolytic,AX2_1
+R1                            1   10K,Resistor,AX2_1
+C2,C3                         2   10pF,Capacitor,AX2_1
+U3                            1   5V Relay board,5V Relay board,RELAY1
+R2,R3                         2   91K,Resistor,AX2_1
+J1                            1   Conn_2,Connector 2 Pin,BOX2_3X
+J2                            1   Conn_3,Connector 3 Pin,BOX3_2X
+J5                            1   Conn_4,Connector 4 Pin,BOX4_2X
+B2                            1   DS3231M MEMS RTC,Precise RTC module,SIP7_SML
+U4                            1   ESP32_DevKitc_V4,ESP32 Dev Board,ESP32_WD
+B1                            1   INA260,Adafruit power sensor,SIP8_SML
+U1                            1   LM2596,DC Voltage Regulator LM2596,BOX_8x17A
+J6                            1   Link,2 Pin Socket for Link,SIP2
+J3,J4                         2   RJ11,Connector 6 Pin,RJ11
+U2                            1   USB-A Female,USB female Type-A 4 pin DIP,BOX_USB

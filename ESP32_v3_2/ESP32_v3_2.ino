@@ -189,6 +189,12 @@ void print_INA260values() {
 // pFlag == 1 => read all sensors and append to a SPIFFS internal file
 // pFlag == 2 => read all sensors and publish to bluetooth client
 void readAllSensors(int pFlag) {
+    // read current, bus voltage and power from INA260 sensor into float variables
+    // do this first to avoid spurious
+    float rc = ina.readCurrent(); // in milliamps
+    float rv = ina.readBusVoltage()/1000.0F; // in Volts
+    float rw = ina.readPower(); // rw = (r)ead milli(w)atts
+    
     // read temperature, pressure and humidity from BME280 sensor into float variables 
     float rt = bme.readTemperature(); // in Celsius
     float rp = bme.readPressure()/100.0F; // in HectoPascals
@@ -201,11 +207,6 @@ void readAllSensors(int pFlag) {
 
     // RTC temperature in C
     float r3 = rtc.temperature()/100.0F;
-    
-    // read current, bus voltage and power from INA260 sensor into float variables
-    float rc = ina.readCurrent(); // in milliamps
-    float rv = ina.readBusVoltage()/1000.0F; // in Volts
-    float rw = ina.readPower(); // rw = (r)ead milli(w)atts
     
     // put these sensor readings into a space efficient comma delimited char array in bufa
     int i, j=0, k, n; char buf[10][10], bufa[10*10+35], buft[30];
@@ -725,11 +726,6 @@ void parseWIFIcredentials(int iTo) {
         switch (iTo) {
             case 0:
                 // to MQTT master... nicely formatted multi-messages
-/*                
-                (n==4) ? sOut = "current ssid=" : sOut = "cannot parse: unchanged ssid="; 
-                sOut += wifi_ssid; sOut += "  password="; sOut += wifi_password; sOut.toCharArray(bufr,MQTTB);
-                client.publish(SLAVE, bufr, false);
-*/
                 (n==4) ? sOut = "Current parameters are:" : sOut = "CANNOT PARSE. Current parameters are:"; 
                 sOut.toCharArray(bufs,BMAX);
                 client.publish(SLAVE, bufs, false);
@@ -794,14 +790,6 @@ void parseMQTTcredentials(int iTo) {
         switch (iTo) {
             case 0:
                 // to MQTT master... nicely formatted multi-messages
-/*                
-                sOut = "valid parse: new server="; sOut += mqtt_server;
-                sOut += "  port="; sOut += mqtt_port;  
-                sOut += "  user="; sOut += mqtt_user;  
-                sOut += "  password="; sOut += mqtt_password;  
-                sOut.toCharArray(bufr,MQTTB);
-                client.publish(SLAVE, bufr, false);
-*/
                 sOut = "VALID PARSE with new parameters:"; sOut.toCharArray(bufs,BMAX);
                 client.publish(SLAVE, bufs, false);
                 sOut = "server=   "; sOut += mqtt_server; sOut.toCharArray(bufs,BMAX);
@@ -906,10 +894,6 @@ void parseTIMEcredentials(int iTo) {
         switch (iTo) {
             case 0:
                 // to MQTT master... nicely formatted multi-messages
-/*                
-                sOut = "valid parse: new minGap="; sOut += time_minGap; sOut.toCharArray(bufr,MQTTB);
-                client.publish(SLAVE, bufr, false);
-*/
                 sOut = "VALID PARSE with new parameter:"; sOut.toCharArray(bufs,BMAX);
                 client.publish(SLAVE, bufs, false);
                 sOut = "time gap (mins)=   "; sOut += time_minGap; sOut.toCharArray(bufs,BMAX);
