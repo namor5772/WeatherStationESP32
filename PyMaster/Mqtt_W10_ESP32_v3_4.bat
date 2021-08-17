@@ -1,1 +1,0 @@
-@py.exe C:\Users\roman\Documents\GitHub\WeatherStationESP32\PyMaster\Mqtt_W10_ESP32_v3_4.py %*
