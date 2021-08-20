@@ -49,7 +49,7 @@ int hourGap=24;
 
 /*  ISR GENERAL */    
 volatile long debouncing_time = 20; // milliseconds
-unsigned long time_now;
+volatile unsigned long time_now;
 #define DEL1 8000
 #define DEL2 300
 
@@ -70,6 +70,8 @@ volatile unsigned long aRAIN[nRAIN]; // array to store millis time stamps for ra
 
 /*  RELAY  */    
 #define RELAY_GPIO 25
+time_t From_hour, To_hour; // from and to action time
+
 
 /* SERVO */
 #define SERVO_GPIO 26
@@ -77,6 +79,8 @@ int dutyCycle = 20; // experimental range [9=0deg, 32=180deg]
 const int PWMFreq = 50;
 const int PWMChannel = 0; 
 const int PWMResolution = 8;
+boolean fPress = false; 
+time_t dct2; // do action time
 // experimental range [8=0deg, 32=180deg] with Chan=0, Res=8, anticlockwise
 // experimental range [2200=0deg, 8200=180deg] with Chan=0 or 1, Res=16,
 //  anticlockwise - not linear? 5000=90deg
@@ -91,6 +95,7 @@ DS3231M_Class rtc; // RTC
 
 /* misc global variables */
 String Amsg = "";
+int8_t Prev_hour = 0, Now_hour;
 
 
 // ISR for anemometer
@@ -161,7 +166,7 @@ float getWindDirection() {
     else if ( 2185 > iwd ) { x = 67.5;  } // ENE
     else if ( 2375 > iwd ) { x = 45.0;  } // NE
     else if ( 2675 > iwd ) { x = 157.5; } // SSE
-    else if ( 2900 > iwd ) { x = 180.0; } // S
+    else if ( 2950 > iwd ) { x = 180.0; } // S
     else if ( 3250 > iwd ) { x = 112.5; } // ESE
     else if ( 3600 > iwd ) { x = 135.0; } // SE     
     else if ( 4096 > iwd ) { x = 90.0;  } // E
@@ -303,7 +308,7 @@ void createDataCollectionTime() {
     Serial.print("tms2= "); Serial.print(bufx); Serial.print("  dct= "); Serial.println(dct); 
 }
 
-// Move the servo to position n in the range [8=0deg, 32=180deg] inclusive.
+// Move the servo to position i in the range [8=0deg, 32=180deg] inclusive.
 // Update the global position dutyCycle. Returns true if all ok, false otherwise.
 // mFlag = 1 => move to position in increments, mFlag = 0 => move in one go.
 boolean MoveServo(int i, int mFlag) {
@@ -326,6 +331,20 @@ boolean MoveServo(int i, int mFlag) {
     }
     return false; // parse error
 }    
+
+// presses the dongle button for isec seconds
+void wifi_press(int isec) {
+    MoveServo(24, 0); // press button    
+    time_now = millis(); while (millis() < time_now+isec*1000) { } // wait for isec
+    MoveServo(20, 0); // back to neutral position   
+}
+
+void wifi_switchoffandon() {
+    wifi_press(10); // presses wifi dongle button for 10 seconds (to shut it down)
+    getLocalTimeRTC(&tms); // read current time into global tm structure variable tms
+    dct2 = mktime(&tms)+(time_t)(60*2); // and convert to global time_t variable dct2
+    fPress = true; // setup flag for doing restarting wifi dongle in 2 minutes
+}
 
 // MQTT callback routine. Driven by client.loop();
 void callback(char* topic, byte *payload, unsigned int length) {
@@ -413,6 +432,19 @@ void callback(char* topic, byte *payload, unsigned int length) {
         // display help text
         MQTThelp();
         
+    } else if (Amsg.equals("wr")) {
+        // (re)starting wifi dongle (by pressing for 5 seconds). If already on this does nothing!
+        wifi_press(5);
+        sOut = "(RE)STARTED WIFI DONGLE"; sOut.toCharArray(bufr,MQTTB);
+        client.publish(SLAVE, bufr, false);
+        
+    } else if (Amsg.equals("ws")) {
+        // shut down wifi dongle (by pressing for 10 seconds), wait for 2 minutes and then 
+        // restart wifi dongle (by pressing for 5 secons).
+        sOut = "SHUT DOWN WIFI DONGLE FOR 2 MINUTES"; sOut.toCharArray(bufr,MQTTB);
+        client.publish(SLAVE, bufr, false);
+        wifi_switchoffandon();
+
     } else {
         // no valid message received
         sOut = "INVALID MESSAGE : "; sOut += bufr;
@@ -693,11 +725,6 @@ void parseWIFIcredentials(int iTo) {
         switch (iTo) {
             case 0:
                 // send feedback to MQTT master... nicely formatted multi-messages
-/*                
-                sOut = "valid parse: new ssid=";  sOut += wifi_ssid;
-                sOut += "  password="; sOut += wifi_password; sOut.toCharArray(bufr,MQTTB);
-                client.publish(SLAVE, bufr, false);
-*/
                 sOut = "VALID PARSE with new parameters:"; sOut.toCharArray(bufs,BMAX);
                 client.publish(SLAVE, bufs, false);
                 sOut = "ssid=     "; sOut += wifi_ssid; sOut.toCharArray(bufs,BMAX);
@@ -920,11 +947,6 @@ void parseTIMEcredentials(int iTo) {
         switch (iTo) {
             case 0:
                 // to MQTT master... nicely formatted multi-messages
-/*                
-                (n==4) ? sOut = "current minGap=" : sOut = "cannot parse: unchanged minGap="; 
-                sOut += time_minGap; sOut.toCharArray(bufr,MQTTB);
-                client.publish(SLAVE, bufr, false);
-*/
                 (n==4) ? sOut = "Current parameter is:" : sOut = "CANNOT PARSE. Current parameter is:"; 
                 sOut.toCharArray(bufs,BMAX);
                 client.publish(SLAVE, bufs, false);
@@ -952,6 +974,8 @@ void MQTThelp() {
     client.publish(SLAVE, " time [<minGap>] // display or change data collection settings", false);
     client.publish(SLAVE, " gd <filename> // Copy filename from slave to master", false);
     client.publish(SLAVE, " help // display this help", false);
+    client.publish(SLAVE, " wr // (re)starting wifi dongle", false);
+    client.publish(SLAVE, " ws // shutting down wifi dongle and restarting 2min later", false);
 }
 
 // displays help on commands available via Bluetooth interface
@@ -962,7 +986,11 @@ void BThelp() {
     SerialBT.println("mqtt [<server> <port> <user> <pwd>] // display or change slave mqtt settings");
     SerialBT.println("time [<minGap>] // display or change data collection settings");
     SerialBT.println("help // display this help");
+    SerialBT.println("wr // (re)starting wifi dongle");
+    SerialBT.println("ws // shutting down wifi dongle and restarting 2min later");
 }
+
+
 
 
 // THE Arduino IDE setup routine
@@ -1056,7 +1084,7 @@ void setup() {
 
     // connect to Bluetooth
     bool btOK = SerialBT.begin("ESP32");
-    if(!btOK){ //Bluetooth device name
+    if (!btOK) { //Bluetooth device name
         Serial.println("An error occurred initializing Bluetooth");
     }
     else {
@@ -1082,16 +1110,31 @@ void loop() {
     // Read current time using rtc (not relying on time server!)
     getLocalTimeRTC(&tms); // read current time into global tm structure variable tms
     tma = mktime(&tms); // and convert to global time_t variable tma
+    Now_hour = tms.tm_hour; 
 
     // the READ ALL SENSORS loop
     if (tma > dct) {
         // current time has just has just passed the data collection time.
         // so collect and save sensor data (with tms as time-stamp)
         readAllSensors(1);
-
-        // increment/update data collection time
-        dct += minGap*60;        
+        dct += minGap*60; // increment/update data collection time        
     }
+
+    // the RESTART WIFI DONGLE loop
+    if (fPress) {
+        if (tma > dct2) {
+            wifi_press(5); // restarts wifi dongle
+            fPress = false; // since restart completed can reset fPress flag
+        }
+    }
+
+    // the CHANGE OF DAY loop where the wifi dongle is restarted (just after midnight!)
+    if (Prev_hour > Now_hour) {
+        Prev_hour = Now_hour;
+        wifi_switchoffandon();
+    }
+
+    
 
     // the BLUETOOTH loop
     // messages from Bluetooth terminal are assumed to end with CR=13 & LF=10.
@@ -1128,6 +1171,17 @@ void loop() {
         }
         else if(Amsg.equals("help")) {
             BThelp();
+        }
+        else if (Amsg.equals("wr")) {
+            // (re)starting wifi dongle (by pressing for 5 seconds). If already on this does nothing!
+            SerialBT.println("(RE)STARTED WIFI DONGLE");
+            wifi_press(5);
+        }
+        else if (Amsg.equals("ws")) {
+            // shut down wifi dongle (by pressing for 10 seconds), wait for 2 minutes and then 
+            // restart wifi dongle (by pressing for 5 seconds).
+            SerialBT.println("SHUT DOWN WIFI DONGLE FOR 2 MINUTES");
+            wifi_switchoffandon();
         }
         else {
             SerialBT.println("Sent invalid message");
