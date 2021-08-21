@@ -21,6 +21,8 @@
 #define BMAX 128
 char wifi_ssid[BMAX] = "<your wifi ssid>";
 char wifi_password[BMAX] = "<your wifi password>";
+int8_t WifiReset_hour = 2; // hour of day (24hr format) when wifi dongle is restarted
+boolean fWifiReset = true; // set to true when action completed
 WiFiClient wifiClient;
 
 /*  MQTT CONNECTION */
@@ -70,8 +72,8 @@ volatile unsigned long aRAIN[nRAIN]; // array to store millis time stamps for ra
 
 /*  RELAY  */    
 #define RELAY_GPIO 25
-time_t From_hour, To_hour; // from and to action time
-
+int8_t From_hour = 8; // hour of day (24hr format) from which charging of dongle is STOPPED
+int8_t To_hour = 20; // hour of day (24hr format) from which charging of dongle is RESTARTED
 
 /* SERVO */
 #define SERVO_GPIO 26
@@ -81,21 +83,22 @@ const int PWMChannel = 0;
 const int PWMResolution = 8;
 boolean fPress = false; 
 time_t dct2; // do action time
-// experimental range [8=0deg, 32=180deg] with Chan=0, Res=8, anticlockwise
-// experimental range [2200=0deg, 8200=180deg] with Chan=0 or 1, Res=16,
-//  anticlockwise - not linear? 5000=90deg
 
 /*  BLUETOOTH SERVER    */    
 BluetoothSerial SerialBT;
 
 /*  I2C DEVICES/SENSORS */    
-Adafruit_BME280 bme;
-Adafruit_INA260 ina = Adafruit_INA260();
-DS3231M_Class rtc; // RTC
+Adafruit_BME280 bme; // all in one weather sensor
+Adafruit_INA260 ina = Adafruit_INA260(); // measures current and voltage 
+DS3231M_Class rtc; // battery backed clock (RTC)
 
 /* misc global variables */
-String Amsg = "";
-int8_t Prev_hour = 0, Now_hour;
+String Amsg = ""; // utility global string
+int8_t Now_hour, Now_min; 
+int8_t ESP32Reboot_hour = 1; // hour of day (24hr format) when this ESP32 is rebooted (hardcoded to 1AM)
+boolean fESP32Reboot = true; // set to true when action completed
+int8_t Init_hour = 23; // hour when action flags (fWifiReset & fESP32Reboot) are set to false 
+
 
 
 // ISR for anemometer
@@ -234,7 +237,7 @@ void readAllSensors(int pFlag) {
     bufa[k-2] = 44; bufa[k-1] = 32;
     for(n=0;n<9;n++){for(i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=44; bufa[k+10*n+9-j]=32;}
     for(i=0;i<8;i++){buf[n][i]==32 ? j++ :bufa[k+10*n+i-j]=buf[n][i];} bufa[k+10*n+8-j]=10; bufa[k+10*n+9-j]=0;
-    Serial.print(bufa);
+    // Serial.print(bufa);
 
     String sOut;
     switch (pFlag) {
@@ -263,7 +266,6 @@ void readAllSensors(int pFlag) {
             client.publish(SLAVE, bufs, false);
             sOut = "Power       "; sOut.concat(buf[9]); sOut.concat(" mW"); sOut.toCharArray(bufs,BMAX);
             client.publish(SLAVE, bufs, false);
-            
             break;
         case 1: // append to SensorData.csv file
             appendFileBasic(SPIFFS, "/SensorData.csv", bufa); // append line with '\n'
@@ -332,13 +334,14 @@ boolean MoveServo(int i, int mFlag) {
     return false; // parse error
 }    
 
-// presses the dongle button for isec seconds
+// presses the wifi dongle button for isec seconds
 void wifi_press(int isec) {
     MoveServo(24, 0); // press button    
     time_now = millis(); while (millis() < time_now+isec*1000) { } // wait for isec
     MoveServo(20, 0); // back to neutral position   
 }
 
+// switches wifi dongle off and then sets things up to switch it back on in 2 minutes
 void wifi_switchoffandon() {
     wifi_press(10); // presses wifi dongle button for 10 seconds (to shut it down)
     getLocalTimeRTC(&tms); // read current time into global tm structure variable tms
@@ -576,7 +579,7 @@ void sendFileBlocks(fs::FS &fs, String sFileName){
     }
 
     // send "start combining blocks" message to MQTT master
-    // if consists of the string "gd <sFileName>"
+    // if consists of the string "gd <sFileName>"1
     sOut = "gd "; sOut.concat(sFileName); sOut.concat(" "); sOut.concat(itoa(file.size(),bufs,10));
     sOut.toCharArray(bufs,BMAX);
     client.publish(SLAVE, bufs, false);
@@ -608,7 +611,6 @@ void sendFileBlocks(fs::FS &fs, String sFileName){
     Serial.print(n);Serial.println(" blocks sent to MASTER");
     sOut = "Finished creating file"; sOut.toCharArray(bufs,BMAX);
     client.publish(SLAVE_END, bufs, false);
-    
 }
 
 // reads the <wfif_*> global configuration parameters from their SPIFFS file.  
@@ -711,7 +713,6 @@ void parseWIFIcredentials(int iTo) {
                 }
             }
         }
-        
         // determine if parsing worked
         if ((k==2)&&(!iMaxed)) iParsed=true;
     }
@@ -738,7 +739,6 @@ void parseWIFIcredentials(int iTo) {
                 SerialBT.print("  password="); SerialBT.println(wifi_password);
                 break;
         }
-
         // restart WIFI with new credentials
         connect_WIFI();
 
@@ -836,7 +836,6 @@ void parseMQTTcredentials(int iTo) {
                 SerialBT.print("  password="); SerialBT.println(mqtt_password);
                 break;
         }
-
         // restart MQTT with new credentials
         connect_MQTT_WIFI(true);
 
@@ -932,7 +931,6 @@ void parseTIMEcredentials(int iTo) {
                 SerialBT.print("valid parse: new minGap="); SerialBT.println(time_minGap);
                 break;
         }
-
         // this sets the next data collection time dct to the next minGap interval. eg if current time
         // is 13min and minGap=10 then dtc=20min 
         createDataCollectionTime();
@@ -974,8 +972,8 @@ void MQTThelp() {
     client.publish(SLAVE, " time [<minGap>] // display or change data collection settings", false);
     client.publish(SLAVE, " gd <filename> // Copy filename from slave to master", false);
     client.publish(SLAVE, " help // display this help", false);
-    client.publish(SLAVE, " wr // (re)starting wifi dongle", false);
-    client.publish(SLAVE, " ws // shutting down wifi dongle and restarting 2min later", false);
+    client.publish(SLAVE, " wr // (re)start wifi dongle", false);
+    client.publish(SLAVE, " ws // shut down wifi dongle and restart 2min later", false);
 }
 
 // displays help on commands available via Bluetooth interface
@@ -986,11 +984,9 @@ void BThelp() {
     SerialBT.println("mqtt [<server> <port> <user> <pwd>] // display or change slave mqtt settings");
     SerialBT.println("time [<minGap>] // display or change data collection settings");
     SerialBT.println("help // display this help");
-    SerialBT.println("wr // (re)starting wifi dongle");
-    SerialBT.println("ws // shutting down wifi dongle and restarting 2min later");
+    SerialBT.println("wr // (re)start wifi dongle");
+    SerialBT.println("ws // shut down wifi dongle and restart 2min later");
 }
-
-
 
 
 // THE Arduino IDE setup routine
@@ -1012,7 +1008,8 @@ void setup() {
     if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)){
         Serial.println("SPIFFS Mount Failed");
         return;
-    } listDir(SPIFFS, "/", 0);
+    }
+    listDir(SPIFFS, "/", 0);
 
     // Now can read the WIFI & MQTT credentials from their SPIFFS files into the
     // global variables <wifi_*>, <mqtt_*> <time_*> and respectively.
@@ -1041,7 +1038,8 @@ void setup() {
             Serial.print(WiFi.RSSI(i)); Serial.print(")");
             Serial.println((WiFi.encryptionType(i) == WIFI_AUTH_OPEN)?" ":"*"); delay(10);
         }
-    } Serial.println(""); delay(500);
+    }
+    Serial.println(""); delay(500);
 
     // Connect to WI-Fi and MQTT broker  
     connect_MQTT_WIFI(false);
@@ -1049,21 +1047,18 @@ void setup() {
     // setup BME280 sensor
     bool stat = bme.begin(0x77);  
     Serial.println(F("\nBME280 setup and test"));
-    if (!stat) {
-        Serial.println("Could not find a valid BME280 sensor, check wiring!");
-    } print_BME280values();  
+    if (!stat) { Serial.println("Could not find a valid BME280 sensor, check wiring!"); }
+    print_BME280values();  
 
     // setup INA260 sensor
     stat = ina.begin(0x40);  
     Serial.println(F("INA260 setup and test"));
-    if (!stat) {
-        Serial.println("Could not find a valid INA260 sensor, check wiring!");
-    } print_INA260values();  
+    if (!stat) { Serial.println("Could not find a valid INA260 sensor, check wiring!"); }
+    print_INA260values();  
 
     // setup DS3231M rtc
-    while (!rtc.begin()) {
-        Serial.println(F("Unable to find DS3231M. Checking again in 3s.")); delay(3000);
-    } Serial.println(F("DS3231M initialized."));
+    while (!rtc.begin()) { Serial.println(F("Unable to find DS3231M. Checking again in 3s.")); delay(3000); }
+    Serial.println(F("DS3231M initialized."));
 
     // connect to time server and update the date/time on the RTC
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer); delay(2000);
@@ -1083,13 +1078,9 @@ void setup() {
     char bufx[30]; strftime(bufx,100,"%d-%b-%Y %H:%M:%S",&tms); Serial.println(bufx);
 
     // connect to Bluetooth
-    bool btOK = SerialBT.begin("ESP32");
-    if (!btOK) { //Bluetooth device name
-        Serial.println("An error occurred initializing Bluetooth");
-    }
-    else {
-        Serial.println("The device started, now you can pair it with bluetooth!");    
-    }
+    bool btOK = SerialBT.begin("ESP32"); // This sets the Bluetooth device name
+    if (!btOK) { Serial.println("An error occurred initializing Bluetooth"); }
+    else { Serial.println("The device started, now you can pair it with bluetooth!"); }
 
     // setup Wind speed and Rain gauge sensors. setup GPIO pins for interrupts.
     pinMode(WIND_GPIO, INPUT); attachInterrupt(WIND_GPIO, WIND_ISR, FALLING);
@@ -1110,31 +1101,62 @@ void loop() {
     // Read current time using rtc (not relying on time server!)
     getLocalTimeRTC(&tms); // read current time into global tm structure variable tms
     tma = mktime(&tms); // and convert to global time_t variable tma
-    Now_hour = tms.tm_hour; 
+    Now_hour = tms.tm_hour; // extract hour for later use
+    Now_min = tms.tm_min; // extract minute for later use
 
-    // the READ ALL SENSORS loop
+    // the READ ALL SENSORS (and append to data file) loop
     if (tma > dct) {
+        Serial.println("Reading Sensors");
+        SerialBT.println("Reading Sensors");
         // current time has just has just passed the data collection time.
         // so collect and save sensor data (with tms as time-stamp)
         readAllSensors(1);
         dct += minGap*60; // increment/update data collection time        
+
+        // the WIFI DONGLE CHARGING loop where not charging in [From_hour, To_hour) range 
+        // inside READ ALL SENSORS loop to avoid continuous running digitalWrite all the time
+        if ((From_hour <= Now_hour)&&(Now_hour < To_hour)) {
+            digitalWrite(25, HIGH); // relay on = not charging wifi dongle
+        }
+        else {
+            digitalWrite(25, LOW); // relay off = charging wifi dongle
+        }
     }
 
-    // the RESTART WIFI DONGLE loop
+    // the RESTART WIFI DONGLE loop (after it was shut down earlier)
     if (fPress) {
         if (tma > dct2) {
             wifi_press(5); // restarts wifi dongle
             fPress = false; // since restart completed can reset fPress flag
+            Serial.println("Restarting wifi dongle");
+            SerialBT.println("Restarting wifi dongle");
         }
     }
 
-    // the CHANGE OF DAY loop where the wifi dongle is restarted (just after midnight!)
-    if (Prev_hour > Now_hour) {
-        Prev_hour = Now_hour;
+    // the RESET WIFI DONGLE loop (at a fixed time daily, here 0AM)
+    // and 2 minutes later restarted in previous loop!
+    if ((Now_hour==WifiReset_hour)&&(!fWifiReset)) {
+        Serial.println("Resetting wifi dongle");
+        SerialBT.println("Resetting wifi dongle");
+        fWifiReset = true; // so we don't reset more than once during this hour 
         wifi_switchoffandon();
     }
 
-    
+    // the REBOOT ESP32 loop (at a fixed time daily, here 1AM)
+    if ((Now_hour==ESP32Reboot_hour)&&(!fESP32Reboot)) {
+        // fESP32Reboot = true; // set so that rebooting is not repeated - not needed since lost on restart
+        Serial.println("Restarting ESP32");
+        SerialBT.println("Restarting ESP32");
+        delay(1000); ESP.restart();        
+    }
+
+    // the RESET ACTIONS loop (at a fixed time daily, here 23AM)
+    if ((Now_hour==Init_hour)&&(Now_min==0)) {
+        Serial.println("Resetting Actions");
+        SerialBT.println("Resetting Actions");
+        fWifiReset = false; // so that can reset wifi at next action time (WifiReset_hour)
+        fESP32Reboot = false; // so that can reboot ESP32 at next action time (ESP32Reboot_hour) 
+    }
 
     // the BLUETOOTH loop
     // messages from Bluetooth terminal are assumed to end with CR=13 & LF=10.
