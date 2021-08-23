@@ -21,8 +21,8 @@
 #define BMAX 128
 char wifi_ssid[BMAX] = "<your wifi ssid>";
 char wifi_password[BMAX] = "<your wifi password>";
-int8_t WifiReset_hour = 2; // hour of day (24hr format) when wifi dongle is restarted
-boolean fWifiReset = true; // set to true when action completed
+int8_t WifiReset_hour = 0; // hour of day (24hr format) when wifi dongle is restarted (hardcoded to 12PM)
+boolean fWifiReset = false; // true when action awaits completion
 WiFiClient wifiClient;
 
 /*  MQTT CONNECTION */
@@ -96,8 +96,8 @@ DS3231M_Class rtc; // battery backed clock (RTC)
 String Amsg = ""; // utility global string
 int8_t Now_hour, Now_min; 
 int8_t ESP32Reboot_hour = 1; // hour of day (24hr format) when this ESP32 is rebooted (hardcoded to 1AM)
-boolean fESP32Reboot = true; // set to true when action completed
-int8_t Init_hour = 23; // hour when action flags (fWifiReset & fESP32Reboot) are set to false 
+boolean fESP32Reboot = false; // true when action awaits completion
+int8_t Init_hour = 23; // hour when action flags (fWifiReset & fESP32Reboot) are set to false (11PM)
 
 
 
@@ -1133,18 +1133,19 @@ void loop() {
         }
     }
 
-    // the RESET WIFI DONGLE loop (at a fixed time daily, here 0AM)
+    // the RESET WIFI DONGLE loop (at a fixed time daily, here 12PM)
     // and 2 minutes later restarted in previous loop!
-    if ((Now_hour==WifiReset_hour)&&(!fWifiReset)) {
+    if ((Now_hour==WifiReset_hour)&&(fWifiReset)) {
         Serial.println("Resetting wifi dongle");
         SerialBT.println("Resetting wifi dongle");
-        fWifiReset = true; // so we don't reset more than once during this hour 
+        fWifiReset = false; // so we don't reset more than once during this hour 
         wifi_switchoffandon();
     }
 
     // the REBOOT ESP32 loop (at a fixed time daily, here 1AM)
-    if ((Now_hour==ESP32Reboot_hour)&&(!fESP32Reboot)) {
-        // fESP32Reboot = true; // set so that rebooting is not repeated - not needed since lost on restart
+    if ((Now_hour==ESP32Reboot_hour)&&(fESP32Reboot)) {
+        // fESP32Reboot = false; // set so that rebooting is not repeated - not needed since lost on restart
+        // but actually set to false when initialised so all ok!
         Serial.println("Restarting ESP32");
         SerialBT.println("Restarting ESP32");
         delay(1000); ESP.restart();        
@@ -1154,8 +1155,8 @@ void loop() {
     if ((Now_hour==Init_hour)&&(Now_min==0)) {
         Serial.println("Resetting Actions");
         SerialBT.println("Resetting Actions");
-        fWifiReset = false; // so that can reset wifi at next action time (WifiReset_hour)
-        fESP32Reboot = false; // so that can reboot ESP32 at next action time (ESP32Reboot_hour) 
+        fWifiReset = true; // so that can reset wifi at next action time (WifiReset_hour)
+        fESP32Reboot = true; // so that can reboot ESP32 at next action time (ESP32Reboot_hour) 
     }
 
     // the BLUETOOTH loop
