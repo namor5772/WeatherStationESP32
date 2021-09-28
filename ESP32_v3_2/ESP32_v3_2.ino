@@ -1,4 +1,4 @@
-/* --Code for ESP32 used in my Binda weather station */
+/* Code for ESP32 used in my Binda weather station */
 #include <time.h>
 #include <Wire.h>
 #include <WiFi.h>
