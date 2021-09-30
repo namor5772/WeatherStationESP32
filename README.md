@@ -63,18 +63,18 @@ In addition we need the following files. They can reside in any directories (on 
 | File | Description |
 | --- | --- |
 | [V_RomansOwn2020.TCLib](data/V_RomansOwn2020.TCLib) | TinyCAD library file with needed custom symbols |
-| [WeatherStationMain1.dsn](data/WeatherStationMain1.dsn) | Actual TinyCAD file for this projects circuit board |
-| [WeatherStationMain1.net](data/WeatherStationMain1.net) | PCB netlist created in Protel format from above file |
+| [WeatherStationESP32_v3b.dsn](data/WeatherStationESP32_v3b.dsn) | Actual TinyCAD file for this projects circuit board |
+| [WeatherStationESP32_v3b.net](data/WeatherStationESP32_v3b.net) | PCB netlist created in Protel format from above file |
 
 Now install the above custom symbol library **V_RomansOwn2020.TCLib** from the main menu of TinyCAD: **Library=>Libraries..=>Add=>V_RomansOwn2020.TCLib=>Open=>Ok**
 
 ![alt text](images/TinyCAD1.png "Install custom TinyCAD library")
 
-Finally we assume that all the generic TinyCAD and VeeCAD symbols libraries are installed and now we can open and view **WeatherStationMain1.dsn** with TinyCAD:
+Finally we assume that all the generic TinyCAD and VeeCAD symbols libraries are installed and now we can open and view **WeatherStationESP32_v3b.dsn** with TinyCAD:
 
-![alt text](images/WeatherStationMain1.png "WeatherStationMain1.dsn in TinyCAD")
+![alt text](images/WeatherStationESP32_v3b.png "WeatherStationESP3_v32b.dsn in TinyCAD")
 
-With the above *.dsn file loaded we can check and recreate (if we want to) the Protel netlist file **WeatherStationMain1.net** (mentioned above). To avoid warnings filter the checking options as follows:
+With the above *.dsn file loaded we can check and recreate (if we want to) the Protel netlist file **WeatherStationESP32_v3b.net** (mentioned above). To avoid warnings filter the checking options as follows:
 
 ![alt text](images/TinyCAD2.png "TinyCAD netlist design rule checks")
 
