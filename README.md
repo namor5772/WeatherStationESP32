@@ -91,13 +91,12 @@ In addition we need the following files. They can reside in any directories (on 
 | File | Description |
 | --- | --- |
 | [V_Standard_RMG.per](data/V_Standard_RMG.per) | Custom VeeCAD shape library file |
-| [WeatherStationMain1.per](data/WeatherStationMain1.per) | Vero Board circuit layout file |
+| [ESPweather3.per](data/ESPweather3.per) | Vero Board circuit layout file |
 
-Our ultimate goal is to have a valid circuit layout file to help us build the hardware. To view it we just need to open **WeatherStationMain1.per** in VeeCAD.
+Our ultimate goal is to have a valid circuit layout file to help us build the hardware. To view it we just need to open **ESPweather3.per** in VeeCAD.
 
-![alt text](images/WeatherStationMain2.png "Vero Board circuit layout file")
+![alt text](images/ESPweather3.png "Vero Board circuit layout file")
 
-We can also modify or recreate it by pressing: **Netlist=>Import=>Import** with **WeatherStationMain1.per** open and dialog set to:
+We can also modify or recreate it by pressing: **Netlist=>Import=>Import** with **ESPweather3.per** open and dialog set to:
 
 ![alt text](images/VeeCAD1.png "VeeCAD Import Netlist dialog")
-
