@@ -157,7 +157,6 @@ root.bind("<Return>", Enter)
 # Called when a message has been published to the MQTT broker
 def on_publish(mosq, obj, mid):
     s = inp.get()
-#    s2 = pub_topic + ": "+s
     s2 = ""+s
     inp.set("")
     
@@ -216,7 +215,6 @@ def on_message(client, userdata, msg):
         else:
             s2 = " blocks read  "
             
-#        s = msg.topic+"> "+str(icount)+s2+str(ibytes)+" bytes  "+aTXT
         s = "  "+str(icount)+s2+str(ibytes)+" bytes  "+aTXT
 
         text['state'] = 'normal'
@@ -231,12 +229,10 @@ def on_message(client, userdata, msg):
         
         sp = len(msg.payload);
         ibytes += sp
-#        s = msg.topic+"> Block "+str(icount)+" : "+str(sp)+" bytes"
         s = "  Block "+str(icount)+" : "+str(sp)+" bytes"
 
         text['state'] = 'normal'
         if icount==1:
-#            text.insert('end', '\n'+msg.topic+"  .")
             text.insert('end', '\n'+"  .")
         else:            
             text.insert('end', '.')
@@ -244,8 +240,6 @@ def on_message(client, userdata, msg):
         
     else:
         if bPrint:
-            #s = msg.topic+": "+message
-    
             text['state'] = 'normal'
             text.insert('end', '\n  '+message)
             text['state'] = 'disabled'
