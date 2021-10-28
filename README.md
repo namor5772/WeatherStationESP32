@@ -47,6 +47,8 @@ The hardware is based around an ESP32 module on a small Vero strip board that co
 ## Setup ESP32
 
 We are using the ESPRESSIF ESP32-WROOM-32E board. Here we describe the software running on this board.
+First build the board and then program the ESP32 using the Arduino IDE.
+When programming the jumper must be set so that the board power and the USB programmer do no conflict, and set afterwars for testing.
 
 ## Setup WIFI interface
 
