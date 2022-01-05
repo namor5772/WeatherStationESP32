@@ -1,1 +1,1 @@
-@py.exe C:\Users\roman\Documents\GitHub\WeatherStationESP32\PyMaster\Mqtt_W10_ESP32_v3_5.py %*
+@py.exe C:\Users\roman\OneDrive\GitHub\WeatherStationESP32\PyMaster\Mqtt_W10_ESP32_v3_5.py %*
