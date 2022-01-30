@@ -48,11 +48,11 @@ The hardware is based around an ESP32 module on a small Vero strip board that co
 
 We are using the ESPRESSIF ESP32-WROOM-32E board. Here we describe the software running on this board.
 First build the board and then program the ESP32 using the Arduino IDE.
-When programming the jumper must be set so that the board power and the USB programmer do no conflict, and set afterwars for testing.
+When programming the jumper must be set so that the board power and the USB programmer do no conflict, and set afterwards for testing.
 
 ## Setup WIFI interface
 
-To access the weather station we are using MQTT via a Python GUI app on a PC running Windows 10. Here we describe this software.
+To access the weather station we are using MQTT via a Python GUI app on a PC running Windows 11. Here we describe this software.
 
 ## Design circuit board
 
