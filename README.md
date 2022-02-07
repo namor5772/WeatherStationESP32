@@ -50,6 +50,7 @@ We are using the ESPRESSIF ESP32-WROOM-32E board. Here we describe the software 
 First build the board and then program the ESP32 using the Arduino IDE.
 When programming the jumper must be set so that the board power and the USB programmer do no conflict, and set afterwards for testing.
 
+
 ## Setup WIFI interface
 
 To access the weather station we are using MQTT via a Python GUI app on a PC running Windows 11. Here we describe this software.
