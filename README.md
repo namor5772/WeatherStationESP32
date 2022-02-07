@@ -50,6 +50,10 @@ We are using the ESPRESSIF ESP32-WROOM-32E board. Here we describe the software 
 First build the board and then program the ESP32 using the Arduino IDE.
 When programming the jumper must be set so that the board power and the USB programmer do no conflict, and set afterwards for testing.
 
+There’s an add-on for the Arduino IDE that allows you to program the ESP32 using the Arduino IDE and its programming language. [Link here](https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/) for how to install this add-on.
+
+
+
 
 ## Setup WIFI interface
 
